@@ -3,6 +3,7 @@ use crate::lexer::{op::Op, token::Token};
 use super::{error::ParserError, Parser};
 
 impl Parser {
+    /// Attempts to parse an arithmetic expression
     pub fn num_expr(&mut self) -> Result<i32, ParserError> {
         let mut x = self.term()?;
 

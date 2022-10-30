@@ -55,6 +55,11 @@ impl Token {
         match self {
             Token::Int(int) => Ok(Expr::Num(int)),
             Token::String(string) => Ok(Expr::Str(string)),
+            Token::Keyword(val) => match val.as_str() {
+                "true" => Ok(Expr::Bool(true)),
+                "false" => Ok(Expr::Bool(false)),
+                _ => todo!(),
+            },
             _ => Err(TokenError::InvalidConversion),
         }
     }

@@ -1,6 +1,8 @@
 pub mod error;
 mod num;
 
+use crate::stmt::Stmt;
+
 use self::error::ParserError;
 
 use super::{expr::Expr, lexer::token::Token, stmt::Assignment};
@@ -15,12 +17,93 @@ impl Parser {
         Self { tokens, cursor: 0 }
     }
 
+    pub fn stmt(&mut self) -> Result<Stmt, ParserError> {
+        let idx = match (self.cursor..self.tokens.len()).into_iter().find_map(|i| {
+            if self.at(i).unwrap() == Token::Semi {
+                return Some(i);
+            }
+            None
+        }) {
+            Some(idx) => idx,
+            None => return Err(ParserError::BadStatement),
+        };
+
+        let slice = &self.tokens[self.cursor..idx];
+
+        // Big ugly match expression
+
+        match slice.iter().next() {
+            // Check if there's even a token
+            Some(token) => match token {
+                // Match the keyword
+                Token::Keyword(keyword) => match keyword.as_str() {
+                    // If it's an assignment statement
+                    "let" => {
+                        // Then check if these things apply
+                        if self.match_rule(&[
+                            Token::Keyword("let".to_owned()),
+                            Token::Ident("".to_owned()),
+                            Token::AssignmentSign,
+                        ]) {
+                            // Get the identier and value
+                            let ident = self.at(self.cursor - 2)?.try_into_ident()?;
+                            let expr = self.expr()?;
+
+                            // Advance because of semicolon
+                            self.adv();
+
+                            return Ok(Stmt::Assignment(Assignment { ident, val: expr }));
+                        }
+                        return Err(ParserError::BadStatement);
+                    }
+
+                    _ => {
+                        return Err(ParserError::BadStatement);
+                    }
+                },
+                _ => return Err(ParserError::BadStatement),
+            },
+            None => return Err(ParserError::UnexpectedEOF),
+        }
+    }
+
+    pub fn expr(&mut self) -> Result<Expr, ParserError> {
+        self.num_expr()
+            .map(|result| Expr::Num(result))
+            .or_else(|_| self.str_expr())
+            .map(|result| result)
+            .or_else(|_| self.bool_expr())
+            .map(|result| result)
+    }
+
+    /// Attempts to match a string token, and advances if successful.
+    pub fn str_expr(&mut self) -> Result<Expr, ParserError> {
+        if let Token::String(string) = self.curr() {
+            self.adv();
+            return Ok(Expr::Str(string));
+        }
+
+        Err(ParserError::Expected(Token::String("".to_owned())))
+    }
+
+    /// Attempts to match a boolean token, and advances if successful.
+    pub fn bool_expr(&mut self) -> Result<Expr, ParserError> {
+        if let Some(bool_val) = self.matches(&[
+            Token::Keyword("true".to_owned()),
+            Token::Keyword("false".to_owned()),
+        ]) {
+            return Ok(bool_val.into_expr()?);
+        }
+
+        Err(ParserError::Expected(Token::String("".to_owned())))
+    }
+
     /// Attempts to match an assignment
-    pub fn assignment(&mut self) -> Result<Assignment, ParserError> {
+    pub fn assignment(&mut self) -> Result<Stmt, ParserError> {
         // Check if it starts with a `let` keyword
 
         if !self.match_rule(&[Token::Keyword("let".to_owned())]) {
-            return Err(ParserError::InvalidLetStatement);
+            return Err(ParserError::Expected(Token::Keyword("let".to_owned())));
         }
 
         let ident = self.curr().try_into_ident()?;
@@ -29,32 +112,28 @@ impl Parser {
 
         // Check if there follows an equals sign
         if !self.match_rule(&[Token::AssignmentSign]) {
-            return Err(ParserError::InvalidLetStatement);
+            return Err(ParserError::Expected(Token::AssignmentSign));
         }
 
         let expr = self.num_expr()?;
 
-        Ok(Assignment {
+        Ok(Stmt::Assignment(Assignment {
             ident,
             val: Expr::Num(expr),
-        })
+        }))
     }
 
+    /// Attempts to parse a comparision statement
     pub fn compare(&mut self) -> Result<Expr, ParserError> {
-        let lhs = self.num_expr()?;
+        let lhs = self.expr()?;
 
         if !self.match_rule(&[Token::EqSign]) {
             return Err(ParserError::Expected(Token::EqSign));
         }
 
-        println!("{:?}", self.curr());
+        let rhs = self.expr()?;
 
-        let rhs = self.num_expr()?;
-
-        Ok(Expr::Comparison(
-            Box::new(Expr::Num(lhs)),
-            Box::new(Expr::Num(rhs)),
-        ))
+        Ok(Expr::Comparison(Box::new(lhs), Box::new(rhs)))
     }
 
     /// Checks if the current token matches one of the given possible tokens, and advances if successful.
@@ -124,12 +203,12 @@ impl Parser {
     }
 
     /// Returns the current cursor of the parser
-    fn pos(&self) -> usize {
+    pub fn pos(&self) -> usize {
         self.cursor
     }
 
     /// Increments the `pos` field
-    fn adv(&mut self) {
+    pub fn adv(&mut self) {
         self.cursor += 1;
     }
 
@@ -267,5 +346,95 @@ mod parser_tests {
         assert_eq!(parser.matches(&pm), Some(Token::Op(Op::Add)));
         assert_eq!(parser.matches(&pm), Some(Token::Op(Op::Sub)));
         assert_eq!(parser.matches(&pm), None)
+    }
+
+    #[test]
+    fn test_compare_nums_success() {
+        let s = "(3 + 15) / 2 == 9";
+        let mut lexer = Lexer::new(s);
+
+        let mut parser = Parser::new(lexer.tokenize().unwrap());
+
+        let result = parser.compare();
+        assert!(result.is_ok());
+
+        let result = result.unwrap();
+
+        assert!(result.eval());
+    }
+
+    #[test]
+    fn test_compare_nums_fail() {
+        let s = "(3 + 15) / 2 == 20";
+        let mut lexer = Lexer::new(s);
+
+        let mut parser = Parser::new(lexer.tokenize().unwrap());
+
+        let result = parser.compare();
+        assert!(result.is_ok());
+
+        let result = result.unwrap();
+
+        assert!(!result.eval());
+    }
+
+    #[test]
+    fn test_compare_strs_success() {
+        let s = " \"This is a string\" == \"This is a string\"";
+        let mut lexer = Lexer::new(s);
+
+        let mut parser = Parser::new(lexer.tokenize().unwrap());
+
+        let result = parser.compare();
+        assert!(result.is_ok());
+
+        let result = result.unwrap();
+
+        assert!(result.eval());
+    }
+
+    #[test]
+    fn test_compare_strs_fail() {
+        let s = " \"This is a string\" == \"This is another string\"";
+        let mut lexer = Lexer::new(s);
+
+        let mut parser = Parser::new(lexer.tokenize().unwrap());
+
+        let result = parser.compare();
+        assert!(result.is_ok());
+
+        let result = result.unwrap();
+
+        assert!(!result.eval());
+    }
+
+    #[test]
+    pub fn compare_bools_success() {
+        let s = "true == true";
+        let mut lexer = Lexer::new(s);
+
+        let mut parser = Parser::new(lexer.tokenize().unwrap());
+
+        let result = parser.compare();
+        assert!(result.is_ok());
+
+        let result = result.unwrap();
+
+        assert!(result.eval());
+    }
+
+    #[test]
+    pub fn compare_bools_fail() {
+        let s = "true == false";
+        let mut lexer = Lexer::new(s);
+
+        let mut parser = Parser::new(lexer.tokenize().unwrap());
+
+        let result = parser.compare();
+        assert!(result.is_ok());
+
+        let result = result.unwrap();
+
+        assert!(!result.eval());
     }
 }

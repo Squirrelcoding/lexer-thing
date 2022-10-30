@@ -1,9 +1,11 @@
+use std::io::{self, BufRead};
+
 use langlib::{lexer::Lexer, parser::error::ParserError};
 
 use langlib::parser::Parser;
 
 fn main() -> Result<(), ParserError> {
-    let s = "(3 * 3) - 6 == \"hello\" ";
+    let s = "let x = \"This is a string.\"; let y = 5;";
 
     let mut lexer = Lexer::new(s);
 
@@ -11,7 +13,11 @@ fn main() -> Result<(), ParserError> {
 
     let mut parser = Parser::new(tokens);
 
-    println!("{:?}", parser.compare()?.eval());
+    println!("{:?}", parser.stmt());
+
+
+    println!("{:?}", parser.stmt());
+
 
     Ok(())
 }

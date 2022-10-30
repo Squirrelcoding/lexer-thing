@@ -17,12 +17,12 @@ impl Expr {
             Expr::Num(num) => *num > 0,
             Expr::Str(str) => !str.is_empty(),
             Expr::Bool(boolean) => *boolean,
+
             Expr::Comparison(a, b) => match (a.as_ref(), b.as_ref()) {
                 (Expr::NumExpr(a), Expr::NumExpr(b)) => a.eval() == b.eval(),
                 (Expr::Num(a), Expr::Num(b)) => a == b,
                 (Expr::Str(a), Expr::Str(b)) => a == b,
                 (Expr::Bool(a), Expr::Bool(b)) => a == b,
-
                 _ => false,
             },
         }
