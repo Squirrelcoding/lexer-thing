@@ -21,6 +21,7 @@ impl Stmt {
         }
     }
 
+    #[allow(clippy::single_match)]
     pub fn from_tokens(tokens: &[Token]) -> Result<Self, StmtErr> {
         match tokens {
             [Token::Keyword(keyword)] => match keyword.as_str() {

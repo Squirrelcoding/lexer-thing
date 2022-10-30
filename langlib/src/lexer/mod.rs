@@ -69,7 +69,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Attempts to tokenize a string
-    pub fn tokenize_string(data: &str) -> Result<(Token, usize), LexerError> {
+    fn tokenize_string(data: &str) -> Result<(Token, usize), LexerError> {
         let quote = match data.chars().next() {
             Some(c) => match c {
                 '\'' => '\'',

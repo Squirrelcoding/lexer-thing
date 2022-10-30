@@ -6,6 +6,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Eq, PartialEq, Error)]
+/// Error enum for the `Parser` struct.
 pub enum ParserError {
     #[error("An invalid or incomplete let statement was encountered")]
     InvalidLetStatement,

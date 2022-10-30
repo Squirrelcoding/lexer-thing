@@ -1,11 +1,11 @@
 pub mod error;
+mod expr;
 mod num;
-
-use crate::stmt::Stmt;
+mod stmt;
 
 use self::error::ParserError;
 
-use super::{expr::Expr, lexer::token::Token, stmt::Assignment};
+use super::lexer::token::Token;
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -17,129 +17,11 @@ impl Parser {
         Self { tokens, cursor: 0 }
     }
 
-    pub fn stmt(&mut self) -> Result<Stmt, ParserError> {
-        let idx = match (self.cursor..self.tokens.len()).into_iter().find_map(|i| {
-            if self.at(i).unwrap() == Token::Semi {
-                return Some(i);
-            }
-            None
-        }) {
-            Some(idx) => idx,
-            None => return Err(ParserError::BadStatement),
-        };
-
-        let slice = &self.tokens[self.cursor..idx];
-
-        // Big ugly match expression
-
-        match slice.iter().next() {
-            // Check if there's even a token
-            Some(token) => match token {
-                // Match the keyword
-                Token::Keyword(keyword) => match keyword.as_str() {
-                    // If it's an assignment statement
-                    "let" => {
-                        // Then check if these things apply
-                        if self.match_rule(&[
-                            Token::Keyword("let".to_owned()),
-                            Token::Ident("".to_owned()),
-                            Token::AssignmentSign,
-                        ]) {
-                            // Get the identier and value
-                            let ident = self.at(self.cursor - 2)?.try_into_ident()?;
-                            let expr = self.expr()?;
-
-                            // Advance because of semicolon
-                            self.adv();
-
-                            return Ok(Stmt::Assignment(Assignment { ident, val: expr }));
-                        }
-                        Err(ParserError::BadStatement)
-                    }
-
-                    _ => {
-                        Err(ParserError::BadStatement)
-                    }
-                },
-                _ => Err(ParserError::BadStatement),
-            },
-            None => Err(ParserError::UnexpectedEOF),
-        }
-    }
-
-    pub fn expr(&mut self) -> Result<Expr, ParserError> {
-        self.num_expr()
-            .map(|result| Expr::Num(result))
-            .or_else(|_| self.str_expr())
-            .or_else(|_| self.bool_expr())
-    }
-
-    /// Attempts to match a string token, and advances if successful.
-    pub fn str_expr(&mut self) -> Result<Expr, ParserError> {
-        if let Token::String(string) = self.curr() {
-            self.adv();
-            return Ok(Expr::Str(string));
-        }
-
-        Err(ParserError::Expected(Token::String("".to_owned())))
-    }
-
-    /// Attempts to match a boolean token, and advances if successful.
-    pub fn bool_expr(&mut self) -> Result<Expr, ParserError> {
-        if let Some(bool_val) = self.matches(&[
-            Token::Keyword("true".to_owned()),
-            Token::Keyword("false".to_owned()),
-        ]) {
-            return Ok(bool_val.into_expr()?);
-        }
-
-        Err(ParserError::Expected(Token::String("".to_owned())))
-    }
-
-    /// Attempts to match an assignment
-    pub fn assignment(&mut self) -> Result<Stmt, ParserError> {
-        // Check if it starts with a `let` keyword
-
-        if !self.match_rule(&[Token::Keyword("let".to_owned())]) {
-            return Err(ParserError::Expected(Token::Keyword("let".to_owned())));
-        }
-
-        let ident = self.curr().try_into_ident()?;
-
-        self.adv();
-
-        // Check if there follows an equals sign
-        if !self.match_rule(&[Token::AssignmentSign]) {
-            return Err(ParserError::Expected(Token::AssignmentSign));
-        }
-
-        let expr = self.num_expr()?;
-
-        Ok(Stmt::Assignment(Assignment {
-            ident,
-            val: Expr::Num(expr),
-        }))
-    }
-
-    /// Attempts to parse a comparision statement
-    pub fn compare(&mut self) -> Result<Expr, ParserError> {
-        let lhs = self.expr()?;
-
-        if !self.match_rule(&[Token::EqSign]) {
-            return Err(ParserError::Expected(Token::EqSign));
-        }
-
-        let rhs = self.expr()?;
-
-        Ok(Expr::Comparison(Box::new(lhs), Box::new(rhs)))
-    }
-
     /// Checks if the current token matches one of the given possible tokens, and advances if successful.
     fn matches(&mut self, possible_tokens: &[Token]) -> Option<Token> {
         let old_pos = self.cursor;
 
         // Iterate through the possible tokens
-
         match possible_tokens.iter().find_map(|token| {
             // Return the token if the current token matches
             if &self.tokens[self.cursor] == token {
@@ -163,7 +45,7 @@ impl Parser {
     fn match_rule(&mut self, rules: &[Token]) -> bool {
         // Check if the current cursor is a `let` keyword.
 
-        let old_post = self.cursor;
+        let old_pos = self.cursor;
 
         // Try to match against a rule and advance if successful
         let is_ok = rules.iter().all(|token| {
@@ -194,7 +76,7 @@ impl Parser {
 
         // Reset the cursor if there was an error
         if !is_ok {
-            self.cursor = old_post;
+            self.cursor = old_pos;
         }
 
         is_ok
