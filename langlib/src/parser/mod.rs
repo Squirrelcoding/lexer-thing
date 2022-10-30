@@ -54,16 +54,16 @@ impl Parser {
 
                             return Ok(Stmt::Assignment(Assignment { ident, val: expr }));
                         }
-                        return Err(ParserError::BadStatement);
+                        Err(ParserError::BadStatement)
                     }
 
                     _ => {
-                        return Err(ParserError::BadStatement);
+                        Err(ParserError::BadStatement)
                     }
                 },
-                _ => return Err(ParserError::BadStatement),
+                _ => Err(ParserError::BadStatement),
             },
-            None => return Err(ParserError::UnexpectedEOF),
+            None => Err(ParserError::UnexpectedEOF),
         }
     }
 
@@ -71,9 +71,7 @@ impl Parser {
         self.num_expr()
             .map(|result| Expr::Num(result))
             .or_else(|_| self.str_expr())
-            .map(|result| result)
             .or_else(|_| self.bool_expr())
-            .map(|result| result)
     }
 
     /// Attempts to match a string token, and advances if successful.

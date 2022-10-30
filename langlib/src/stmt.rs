@@ -12,7 +12,7 @@ pub enum Stmt {
 impl Stmt {
     pub fn execute(&self) -> Option<Expr> {
         match self {
-            Stmt::Assignment(assignment) => todo!(),
+            Stmt::Assignment(_) => todo!(),
             Stmt::Print(str) => {
                 println!("{str}");
                 None
