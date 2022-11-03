@@ -25,7 +25,7 @@ impl Interpreter {
     pub fn repl() -> Result<(), Err> {
         loop {
             let mut input_string = String::new();
-            
+
             if input_string == "EXIT" {
                 break;
             }

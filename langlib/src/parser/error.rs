@@ -1,6 +1,7 @@
 use thiserror::Error;
 
 use crate::{
+    expr::ExprError,
     lexer::token::{Token, TokenError},
     stmt::StmtErr,
 };
@@ -17,6 +18,9 @@ pub enum ParserError {
     #[error("A statement error has occured while parsing")]
     StmtErr(#[from] StmtErr),
 
+    #[error("An expression error has occured while parsing")]
+    ExprError(#[from] ExprError),
+
     #[error("An incomplete term was encountered while parsing")]
     BadTerm,
 
@@ -28,6 +32,9 @@ pub enum ParserError {
 
     #[error("Expected token \"{0:?}\"")]
     Expected(Token),
+
+    #[error("Expected expression")]
+    ExpectedExpr,
 
     #[error("Failed to parse statement")]
     BadStatement,

@@ -8,7 +8,11 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse an arithmetic expression
     pub fn num_expr(&mut self) -> Result<Expr, ParserError> {
+
+        
         let mut x: i32 = self.term()?.try_into()?;
+        println!("{x}");
+
 
         while !self.is_at_end() {
             let op = match self.matches(&[Token::Op(Op::Add), Token::Op(Op::Sub)]) {
@@ -73,12 +77,10 @@ impl Parser {
 
     /// Attempts to parse a number
     pub fn num(&mut self) -> Result<i32, ParserError> {
-        println!("here: {:?}", self.curr());
-
-        if self.match_rule(&[Token::Int(13)]) {
+        if self.match_rule(&[Token::Int(0)]) {
             return Ok(self.prev().try_into_int()?);
         }
 
-        Err(ParserError::BadTerm)
+        Err(ParserError::Expected(Token::Int(0)))
     }
 }

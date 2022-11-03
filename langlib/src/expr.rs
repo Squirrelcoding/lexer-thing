@@ -26,7 +26,7 @@ impl TryInto<i32> for Expr {
     fn try_into(self) -> Result<i32, Self::Error> {
         match self {
             Expr::Num(num) => Ok(num),
-            _ => Err(ParserError::BadTerm),
+            _ => Err(ParserError::ExprError(ExprError::FailedConversion)),
         }
     }
 }
@@ -37,7 +37,7 @@ impl TryInto<bool> for Expr {
     fn try_into(self) -> Result<bool, Self::Error> {
         match self {
             Expr::Bool(bool) => Ok(bool),
-            _ => Err(ParserError::BadTerm),
+            _ => Err(ParserError::ExprError(ExprError::FailedConversion)),
         }
     }
 }
@@ -60,7 +60,16 @@ impl BinExpr {
             (Expr::Str(a), Expr::Str(b)) => Ok(Expr::Bool(a == b)),
             (Expr::Bool(a), Expr::Bool(b)) => Ok(Expr::Bool(a == b)),
             (Expr::Bin(a), Expr::Bin(b)) => Ok(Expr::Bool(a.eval()? == b.eval()?)),
-            _ => Err(ParserError::BadTerm),
+            _ => Err(ParserError::ExprError(ExprError::FailedBinEvaluation)),
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+pub enum ExprError {
+    #[error("A failed conversion occured.")]
+    FailedConversion,
+
+    #[error("The parser failed to evaluate a binary expression")]
+    FailedBinEvaluation,
 }
