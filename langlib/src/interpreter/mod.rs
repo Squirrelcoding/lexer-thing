@@ -25,11 +25,11 @@ impl Interpreter {
     pub fn repl() -> Result<(), Err> {
         loop {
             let mut input_string = String::new();
-            io::stdin().read_line(&mut input_string).unwrap(); // Get the stdin from the user, and put it in read_string
-
-            if input_string == ".exit" {
+            
+            if input_string == "EXIT" {
                 break;
             }
+            io::stdin().read_line(&mut input_string).unwrap(); // Get the stdin from the user, and put it in read_string
 
             let result = Parser::new(Lexer::new(&input_string).tokenize()?)
                 .expr()?
