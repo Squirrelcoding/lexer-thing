@@ -37,9 +37,8 @@ impl Parser {
                             // Get the identier and value
                             let ident = self.at(self.cursor - 2)?.try_into_ident()?;
 
-                            
                             let expr = self.expr()?;
-                            
+
                             // Advance because of semicolon
                             self.adv();
 

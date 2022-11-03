@@ -27,7 +27,7 @@ impl Parser {
 
         self.cursor += len + 1;
 
-        let stmt = Stmt::from_tokens(&first_tokens)?;
+        let stmt = Stmt::from_tokens(first_tokens)?;
 
         stmt_vec.push(stmt);
 
@@ -292,9 +292,9 @@ mod parser_tests {
 
         let result = result.unwrap();
 
-        assert!(result.eval_bin().is_ok());
+        assert!(result.eval().is_ok());
 
-        let result = result.eval_bin().unwrap();
+        let result = result.eval().unwrap();
     }
 
     #[test]
@@ -307,7 +307,7 @@ mod parser_tests {
         let result = parser.compare();
         assert!(result.is_ok());
 
-        let result = result.unwrap().eval_bin();
+        let result = result.unwrap().eval();
         assert!(result.is_ok());
 
         let result = result.unwrap();
@@ -324,7 +324,7 @@ mod parser_tests {
         let result = parser.compare();
         assert!(result.is_ok());
 
-        let result = result.unwrap().eval_bin();
+        let result = result.unwrap().eval();
 
         assert!(result.is_ok());
 
@@ -346,7 +346,7 @@ mod parser_tests {
         let result = parser.compare();
         assert!(result.is_ok());
 
-        let result = result.unwrap().eval_bin();
+        let result = result.unwrap().eval();
 
         assert!(result.is_ok());
 
@@ -364,7 +364,7 @@ mod parser_tests {
         let result = parser.compare();
         assert!(result.is_ok());
 
-        let result = result.unwrap().eval_bin();
+        let result = result.unwrap().eval();
 
         assert!(result.is_ok());
 
@@ -383,7 +383,7 @@ mod parser_tests {
         let result = parser.compare();
         assert!(result.is_ok());
 
-        let result = result.unwrap().eval_bin();
+        let result = result.unwrap().eval();
 
         assert!(result.is_ok());
 

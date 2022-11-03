@@ -1,13 +1,14 @@
-use crate::{expr::{Expr, BinExpr}, lexer::{token::Token, op::Op}};
+use crate::{
+    expr::{BinExpr, Expr},
+    lexer::{op::Op, token::Token},
+};
 
 use super::{error::ParserError, Parser};
 
 impl Parser {
     /// Attempts to parse an expression
     pub fn expr(&mut self) -> Result<Expr, ParserError> {
-        self.num_expr()
-            .or_else(|_| self.str_expr())
-            .or_else(|_| self.bool_expr())
+        self.compare()
     }
 
     /// Attempts to parse a string token, and advances if successful.
@@ -33,15 +34,25 @@ impl Parser {
     }
     /// Attempts to parse a comparision statement
     pub fn compare(&mut self) -> Result<Expr, ParserError> {
-        let lhs = self.expr()?;
+        let lhs = self
+            .num_expr()
+            .or_else(|_| self.str_expr())
+            .or_else(|_| self.bool_expr())?;
 
-        // Check if there's an equality sign
+        // Check if there's an equality sign, if not then return early.
         if !self.match_rule(&[Token::EqSign]) {
-            return Err(ParserError::Expected(Token::EqSign));
+            return Ok(lhs);
         }
 
-        let rhs = self.expr()?;
+        let rhs = self
+            .num_expr()
+            .or_else(|_| self.str_expr())
+            .or_else(|_| self.bool_expr())?;
 
-        Ok(Expr::Bin(BinExpr::new(Box::new(lhs), Box::new(rhs), Op::EqSign)))
+        Ok(Expr::Bin(BinExpr::new(
+            Box::new(lhs),
+            Box::new(rhs),
+            Op::EqSign,
+        )))
     }
 }

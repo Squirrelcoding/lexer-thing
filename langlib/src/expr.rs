@@ -1,5 +1,3 @@
-use std::mem;
-
 use crate::parser::error::ParserError;
 
 use super::lexer::op::Op;
@@ -14,11 +12,11 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn eval_bin(&self) -> Result<Expr, ParserError> {
+    pub fn eval(&self) -> Result<Expr, ParserError> {
         if let Expr::Bin(expr) = self {
             return expr.eval();
         }
-        Err(ParserError::BadTerm)
+        Ok(self.clone())
     }
 }
 

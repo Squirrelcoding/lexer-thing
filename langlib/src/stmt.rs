@@ -49,9 +49,13 @@ impl Stmt {
 
                     Ok(Self::Assignment(Assignment { ident, val: expr }))
                 }
-                _ => return Err(ParserError::StmtErr(StmtErr::UnknownKeyword)),
+                _ => Err(ParserError::StmtErr(StmtErr::UnknownKeyword)),
             },
-            _ => Err(ParserError::BadStatement),
+            _ => {
+                let expr = Parser::new(tokens.to_vec()).expr()?;
+
+                Ok(Stmt::ExprStatement(expr))
+            }
         }
     }
 }
@@ -92,6 +96,7 @@ mod stmt_tests {
             Token::Op(Op::Add),
             Token::Int(1),
             Token::RightBracket,
+            Token::Semi,
         ];
 
         let binding = Stmt::from_tokens(&tokens);
@@ -120,6 +125,7 @@ mod stmt_tests {
             Token::Op(Op::Add),
             Token::Int(1),
             Token::RightBracket,
+            Token::Semi,
         ];
 
         let binding = Stmt::from_tokens(&tokens);
