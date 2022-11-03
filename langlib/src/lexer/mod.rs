@@ -36,6 +36,7 @@ impl<'a> Lexer<'a> {
         }
 
         let (token, len) = Lexer::parse_token(&self.input[self.position..])?;
+
         self.position += len;
 
         Ok((token, len))
@@ -145,6 +146,10 @@ impl<'a> Lexer<'a> {
                 Some(idx)
             })
             .unwrap_or(s.len());
+
+        if x == 0 {
+            return Err(LexerError::InvalidToken);
+        }
 
         Ok((s[..x].to_owned(), x))
     }

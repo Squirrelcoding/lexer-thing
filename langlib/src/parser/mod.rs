@@ -3,6 +3,8 @@ mod expr;
 mod num;
 mod stmt;
 
+use crate::stmt::Stmt;
+
 use self::error::ParserError;
 
 use super::lexer::token::Token;
@@ -14,7 +16,47 @@ pub struct Parser {
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, cursor: 0 }
+        Self {
+            tokens,
+            cursor: 0,
+        }
+    }
+
+    pub fn get_statements(&mut self) -> Result<Vec<Stmt>, ParserError> {
+
+        let mut stmt_vec = Vec::new();
+        
+        let (first_tokens, len) =
+        Parser::take_while(&self.tokens[..], |token| {
+            token != &Token::Semi
+        })?;
+
+
+        self.cursor += len + 1;
+
+
+        let stmt = Stmt::from_tokens(&first_tokens)?;
+
+        stmt_vec.push(stmt);
+        
+
+        while !self.is_at_end() {
+            let (tokens, len) =
+            Parser::take_while(&self.tokens[self.cursor..], |token| {
+                token != &Token::Semi
+            })?;
+
+            let stmt = Stmt::from_tokens(tokens)?;
+
+            stmt_vec.push(stmt);
+
+            self.cursor += len;
+
+
+        }
+        
+
+        Ok(stmt_vec)
     }
 
     /// Checks if the current token matches one of the given possible tokens, and advances if successful.
@@ -134,6 +176,30 @@ impl Parser {
     /// Returns a boolean indicating whether the position is at the end of the token stream.
     pub fn is_at_end(&self) -> bool {
         self.cursor + 1 >= self.tokens.len()
+    }
+
+    /// A take_while method like the lexers but for tokens
+    fn take_while<F>(tokens: &[Token], predicate: F) -> Result<(&[Token], usize), ParserError>
+    where
+        F: Fn(&Token) -> bool,
+    {
+        let x = tokens
+            .iter()
+            .enumerate()
+            .find_map(|(idx, token)| {
+                if predicate(token) {
+                    return None;
+                }
+
+                Some(idx)
+            })
+            .unwrap_or(tokens.len());
+
+        if x == 0 {
+            return Err(ParserError::RecursionDetected);
+        }
+
+        Ok((&tokens[..x], x))
     }
 }
 
@@ -276,9 +342,13 @@ mod parser_tests {
     #[test]
     fn test_compare_strs_fail() {
         let s = " \"This is a string\" == \"This is another string\"";
+
+        println!("================================================");
+
         let mut lexer = Lexer::new(s);
 
         let mut parser = Parser::new(lexer.tokenize().unwrap());
+
 
         let result = parser.compare();
         assert!(result.is_ok());

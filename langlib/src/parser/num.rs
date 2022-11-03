@@ -1,11 +1,11 @@
-use crate::lexer::{op::Op, token::Token};
+use crate::{lexer::{op::Op, token::Token}, expr::Expr};
 
 use super::{error::ParserError, Parser};
 
 impl Parser {
     /// Attempts to parse an arithmetic expression
-    pub fn num_expr(&mut self) -> Result<i32, ParserError> {
-        let mut x = self.term()?;
+    pub fn num_expr(&mut self) -> Result<Expr, ParserError> {
+        let mut x: i32 = self.term()?.try_into()?;
 
         while !self.is_at_end() {
             let op = match self.matches(&[Token::Op(Op::Add), Token::Op(Op::Sub)]) {
@@ -14,7 +14,7 @@ impl Parser {
             }
             .op()?;
 
-            let other_term = self.term()?;
+            let other_term: i32 = self.term()?.try_into()?;
             match op {
                 Op::Add => x += other_term,
                 Op::Sub => x -= other_term,
@@ -22,13 +22,13 @@ impl Parser {
             }
         }
 
-        Ok(x)
+        Ok(Expr::Num(x))
     }
 
     /// Attempts to parse a term
-    pub fn term(&mut self) -> Result<i32, ParserError> {
+    pub fn term(&mut self) -> Result<Expr, ParserError> {
         // a will be a factor
-        let mut a = self.factor()?;
+        let mut a: i32 = self.factor()?.try_into()?;
 
         // Get the operator given the allowed tokens
 
@@ -39,7 +39,7 @@ impl Parser {
             }
             .op()?;
 
-            let b = self.factor()?;
+            let b: i32 = self.factor()?.try_into()?;
 
             match op {
                 Op::Mul => a *= b,
@@ -48,11 +48,11 @@ impl Parser {
             }
         }
 
-        Ok(a)
+        Ok(Expr::Num(a))
     }
 
     /// Attempts to parse a factor
-    pub fn factor(&mut self) -> Result<i32, ParserError> {
+    pub fn factor(&mut self) -> Result<Expr, ParserError> {
         if self.matches(&[Token::LeftBracket]).is_some() {
             let result = self.num_expr()?;
 
@@ -63,7 +63,7 @@ impl Parser {
             return Ok(result);
         }
 
-        self.num()
+        Ok(Expr::Num(self.num()?))
     }
 
     /// Attempts to parse a number

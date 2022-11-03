@@ -1,5 +1,4 @@
 use crate::{
-    expr::Expr,
     lexer::token::Token,
     stmt::{Assignment, Stmt},
 };
@@ -7,14 +6,15 @@ use crate::{
 use super::{error::ParserError, Parser};
 
 impl Parser {
-
     /// Attempts to parse a statement from some tokens
     pub fn stmt(&mut self) -> Result<Stmt, ParserError> {
 
+        
         // The index of the next semicolon.
-        let idx = match (self.cursor..self.tokens.len()).into_iter().find(|i| {
-            self.at(*i).unwrap() == Token::Semi
-        }) {
+        let idx = match (self.cursor..self.tokens.len())
+            .into_iter()
+            .find(|i| self.at(*i).unwrap() == Token::Semi)
+        {
             Some(idx) => idx,
             None => return Err(ParserError::Expected(Token::Semi)),
         };
@@ -58,7 +58,6 @@ impl Parser {
 
     /// Attempts to match an assignment
     pub fn assignment(&mut self) -> Result<Stmt, ParserError> {
-
         // Check if it starts with a `let` keyword
         if !self.match_rule(&[Token::Keyword("let".to_owned())]) {
             return Err(ParserError::Expected(Token::Keyword("let".to_owned())));
@@ -77,9 +76,6 @@ impl Parser {
 
         let expr = self.expr()?;
 
-        Ok(Stmt::Assignment(Assignment {
-            ident,
-            val: expr,
-        }))
+        Ok(Stmt::Assignment(Assignment { ident, val: expr }))
     }
 }

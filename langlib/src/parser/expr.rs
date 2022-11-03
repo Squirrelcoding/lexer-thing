@@ -3,11 +3,9 @@ use crate::{expr::Expr, lexer::token::Token};
 use super::{error::ParserError, Parser};
 
 impl Parser {
-
     /// Attempts to parse an expression
     pub fn expr(&mut self) -> Result<Expr, ParserError> {
         self.num_expr()
-            .map(Expr::Num)
             .or_else(|_| self.str_expr())
             .or_else(|_| self.bool_expr())
     }

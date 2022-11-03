@@ -1,3 +1,5 @@
+use crate::parser::error::ParserError;
+
 use super::lexer::op::Op;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -25,6 +27,18 @@ impl Expr {
                 (Expr::Bool(a), Expr::Bool(b)) => a == b,
                 _ => false,
             },
+        }
+    }
+}
+
+impl TryInto<i32> for Expr {
+    type Error = ParserError;
+
+    fn try_into(self) -> Result<i32, Self::Error> {
+        match self {
+            Expr::NumExpr(expr) => Ok(expr.eval()),
+            Expr::Num(num) => Ok(num),
+            _ => Err(ParserError::BadTerm)
         }
     }
 }
