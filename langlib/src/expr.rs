@@ -1,3 +1,5 @@
+use std::mem;
+
 use crate::parser::error::ParserError;
 
 use super::lexer::op::Op;
@@ -5,29 +7,18 @@ use super::lexer::op::Op;
 #[derive(Debug, Clone, Eq, PartialEq)]
 
 pub enum Expr {
-    NumExpr(NumExpr),
     Num(i32),
     Str(String),
     Bool(bool),
-    Comparison(Box<Expr>, Box<Expr>),
+    Bin(BinExpr),
 }
 
 impl Expr {
-    pub fn eval(&self) -> bool {
-        match self {
-            Expr::NumExpr(expr) => expr.eval() > 0,
-            Expr::Num(num) => *num > 0,
-            Expr::Str(str) => !str.is_empty(),
-            Expr::Bool(boolean) => *boolean,
-
-            Expr::Comparison(a, b) => match (a.as_ref(), b.as_ref()) {
-                (Expr::NumExpr(a), Expr::NumExpr(b)) => a.eval() == b.eval(),
-                (Expr::Num(a), Expr::Num(b)) => a == b,
-                (Expr::Str(a), Expr::Str(b)) => a == b,
-                (Expr::Bool(a), Expr::Bool(b)) => a == b,
-                _ => false,
-            },
+    pub fn eval_bin(&self) -> Result<Expr, ParserError> {
+        if let Expr::Bin(expr) = self {
+            return expr.eval();
         }
+        Err(ParserError::BadTerm)
     }
 }
 
@@ -36,35 +27,42 @@ impl TryInto<i32> for Expr {
 
     fn try_into(self) -> Result<i32, Self::Error> {
         match self {
-            Expr::NumExpr(expr) => Ok(expr.eval()),
             Expr::Num(num) => Ok(num),
-            _ => Err(ParserError::BadTerm)
+            _ => Err(ParserError::BadTerm),
+        }
+    }
+}
+
+impl TryInto<bool> for Expr {
+    type Error = ParserError;
+
+    fn try_into(self) -> Result<bool, Self::Error> {
+        match self {
+            Expr::Bool(bool) => Ok(bool),
+            _ => Err(ParserError::BadTerm),
         }
     }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct NumExpr {
-    l: i32,
-    r: i32,
+pub struct BinExpr {
+    lhs: Box<Expr>,
+    rhs: Box<Expr>,
     op: Op,
 }
 
-impl NumExpr {
-    pub fn new(left: i32, right: i32, op: Op) -> Self {
-        Self {
-            l: left,
-            r: right,
-            op,
-        }
+impl BinExpr {
+    pub fn new(lhs: Box<Expr>, rhs: Box<Expr>, op: Op) -> Self {
+        Self { lhs, rhs, op }
     }
 
-    pub fn eval(&self) -> i32 {
-        match self.op {
-            Op::Add => self.l + self.r,
-            Op::Sub => self.l - self.r,
-            Op::Mul => self.l * self.r,
-            Op::Div => self.l / self.r,
+    pub fn eval(&self) -> Result<Expr, ParserError> {
+        match (self.lhs.as_ref(), self.rhs.as_ref()) {
+            (Expr::Num(a), Expr::Num(b)) => Ok(Expr::Bool(a == b)),
+            (Expr::Str(a), Expr::Str(b)) => Ok(Expr::Bool(a == b)),
+            (Expr::Bool(a), Expr::Bool(b)) => Ok(Expr::Bool(a == b)),
+            (Expr::Bin(a), Expr::Bin(b)) => Ok(Expr::Bool(a.eval()? == b.eval()?)),
+            _ => Err(ParserError::BadTerm),
         }
     }
 }

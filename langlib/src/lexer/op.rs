@@ -5,4 +5,5 @@ pub enum Op {
     Sub,
     Mul,
     Div,
+    EqSign,
 }

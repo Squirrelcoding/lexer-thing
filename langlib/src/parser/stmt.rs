@@ -8,8 +8,6 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse a statement from some tokens
     pub fn stmt(&mut self) -> Result<Stmt, ParserError> {
-
-        
         // The index of the next semicolon.
         let idx = match (self.cursor..self.tokens.len())
             .into_iter()
@@ -38,8 +36,10 @@ impl Parser {
                         ]) {
                             // Get the identier and value
                             let ident = self.at(self.cursor - 2)?.try_into_ident()?;
-                            let expr = self.expr()?;
 
+                            
+                            let expr = self.expr()?;
+                            
                             // Advance because of semicolon
                             self.adv();
 

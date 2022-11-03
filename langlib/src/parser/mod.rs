@@ -16,45 +16,31 @@ pub struct Parser {
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self {
-            tokens,
-            cursor: 0,
-        }
+        Self { tokens, cursor: 0 }
     }
 
     pub fn get_statements(&mut self) -> Result<Vec<Stmt>, ParserError> {
-
         let mut stmt_vec = Vec::new();
-        
-        let (first_tokens, len) =
-        Parser::take_while(&self.tokens[..], |token| {
-            token != &Token::Semi
-        })?;
 
+        let (first_tokens, len) =
+            Parser::take_while(&self.tokens[..], |token| token != &Token::Semi)?;
 
         self.cursor += len + 1;
-
 
         let stmt = Stmt::from_tokens(&first_tokens)?;
 
         stmt_vec.push(stmt);
-        
 
         while !self.is_at_end() {
             let (tokens, len) =
-            Parser::take_while(&self.tokens[self.cursor..], |token| {
-                token != &Token::Semi
-            })?;
+                Parser::take_while(&self.tokens[self.cursor..], |token| token != &Token::Semi)?;
 
             let stmt = Stmt::from_tokens(tokens)?;
 
             stmt_vec.push(stmt);
 
             self.cursor += len;
-
-
         }
-        
 
         Ok(stmt_vec)
     }
@@ -207,7 +193,7 @@ impl Parser {
 mod parser_tests {
 
     use super::super::lexer::op::Op;
-    use crate::lexer::Lexer;
+    use crate::{expr::Expr, lexer::Lexer};
 
     use super::*;
 
@@ -306,7 +292,9 @@ mod parser_tests {
 
         let result = result.unwrap();
 
-        assert!(result.eval());
+        assert!(result.eval_bin().is_ok());
+
+        let result = result.eval_bin().unwrap();
     }
 
     #[test]
@@ -319,9 +307,11 @@ mod parser_tests {
         let result = parser.compare();
         assert!(result.is_ok());
 
-        let result = result.unwrap();
+        let result = result.unwrap().eval_bin();
+        assert!(result.is_ok());
 
-        assert!(!result.eval());
+        let result = result.unwrap();
+        assert_eq!(result, Expr::Bool(false));
     }
 
     #[test]
@@ -334,9 +324,13 @@ mod parser_tests {
         let result = parser.compare();
         assert!(result.is_ok());
 
+        let result = result.unwrap().eval_bin();
+
+        assert!(result.is_ok());
+
         let result = result.unwrap();
 
-        assert!(result.eval());
+        assert_eq!(result, Expr::Bool(true));
     }
 
     #[test]
@@ -349,13 +343,15 @@ mod parser_tests {
 
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
-
         let result = parser.compare();
         assert!(result.is_ok());
 
-        let result = result.unwrap();
+        let result = result.unwrap().eval_bin();
 
-        assert!(!result.eval());
+        assert!(result.is_ok());
+
+        let result = result.unwrap();
+        assert_eq!(result, Expr::Bool(false));
     }
 
     #[test]
@@ -368,9 +364,13 @@ mod parser_tests {
         let result = parser.compare();
         assert!(result.is_ok());
 
+        let result = result.unwrap().eval_bin();
+
+        assert!(result.is_ok());
+
         let result = result.unwrap();
 
-        assert!(result.eval());
+        assert_eq!(result, Expr::Bool(true));
     }
 
     #[test]
@@ -383,8 +383,12 @@ mod parser_tests {
         let result = parser.compare();
         assert!(result.is_ok());
 
+        let result = result.unwrap().eval_bin();
+
+        assert!(result.is_ok());
+
         let result = result.unwrap();
 
-        assert!(!result.eval());
+        assert_eq!(result, Expr::Bool(false));
     }
 }

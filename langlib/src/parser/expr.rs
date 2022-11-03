@@ -1,4 +1,4 @@
-use crate::{expr::Expr, lexer::token::Token};
+use crate::{expr::{Expr, BinExpr}, lexer::{token::Token, op::Op}};
 
 use super::{error::ParserError, Parser};
 
@@ -42,6 +42,6 @@ impl Parser {
 
         let rhs = self.expr()?;
 
-        Ok(Expr::Comparison(Box::new(lhs), Box::new(rhs)))
+        Ok(Expr::Bin(BinExpr::new(Box::new(lhs), Box::new(rhs), Op::EqSign)))
     }
 }

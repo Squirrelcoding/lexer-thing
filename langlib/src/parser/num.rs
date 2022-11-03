@@ -1,4 +1,7 @@
-use crate::{lexer::{op::Op, token::Token}, expr::Expr};
+use crate::{
+    expr::Expr,
+    lexer::{op::Op, token::Token},
+};
 
 use super::{error::ParserError, Parser};
 

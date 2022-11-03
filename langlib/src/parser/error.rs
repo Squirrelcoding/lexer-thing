@@ -34,4 +34,7 @@ pub enum ParserError {
 
     #[error("A case where recursion in the parser was provoked has been encountered.")]
     RecursionDetected,
+
+    #[error("An invalid comparision was attempted to be made.")]
+    InvalidComparision,
 }
