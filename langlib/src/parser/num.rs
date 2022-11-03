@@ -8,11 +8,7 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse an arithmetic expression
     pub fn num_expr(&mut self) -> Result<Expr, ParserError> {
-
-        
         let mut x: i32 = self.term()?.try_into()?;
-        println!("{x}");
-
 
         while !self.is_at_end() {
             let op = match self.matches(&[Token::Op(Op::Add), Token::Op(Op::Sub)]) {
@@ -29,7 +25,7 @@ impl Parser {
             }
         }
 
-        println!("{x}");
+
 
         Ok(Expr::Num(x))
     }

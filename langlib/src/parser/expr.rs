@@ -18,7 +18,6 @@ impl Parser {
             return Ok(expr);
         }
 
-
         self.compare()
     }
 
@@ -49,10 +48,10 @@ impl Parser {
             .num_expr()
             .or_else(|_| self.str_expr())
             .or_else(|_| self.bool_expr())?;
+            println!("X: {lhs:?}");
 
         // Check if there's an equality sign, if not then return early.
-        if !self.match_rule(&[Token::EqSign]) {
-
+        if self.is_at_end() || !self.match_rule(&[Token::EqSign]) {
             return Ok(lhs);
         }
 
