@@ -25,7 +25,7 @@ impl Parser {
             }
         }
 
-        println!("{x}");
+
 
         Ok(Expr::Num(x))
     }
@@ -73,12 +73,10 @@ impl Parser {
 
     /// Attempts to parse a number
     pub fn num(&mut self) -> Result<i32, ParserError> {
-        println!("here: {:?}", self.curr());
-
-        if self.match_rule(&[Token::Int(13)]) {
+        if self.match_rule(&[Token::Int(0)]) {
             return Ok(self.prev().try_into_int()?);
         }
 
-        Err(ParserError::BadTerm)
+        Err(ParserError::Expected(Token::Int(0)))
     }
 }

@@ -8,6 +8,16 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse an expression
     pub fn expr(&mut self) -> Result<Expr, ParserError> {
+        if self.match_rule(&[Token::LeftBracket]) {
+            let expr = self.expr()?;
+
+            if !self.match_rule(&[Token::RightBracket]) {
+                return Err(ParserError::Expected(Token::RightBracket));
+            }
+
+            return Ok(expr);
+        }
+
         self.compare()
     }
 
@@ -18,7 +28,7 @@ impl Parser {
             return Ok(Expr::Str(string));
         }
 
-        Err(ParserError::Expected(Token::String("".to_owned())))
+        Err(ParserError::ExpectedExpr)
     }
 
     /// Attempts to match a boolean token, and advances if successful.
@@ -30,7 +40,7 @@ impl Parser {
             return Ok(bool_val.into_expr()?);
         }
 
-        Err(ParserError::Expected(Token::String("".to_owned())))
+        Err(ParserError::Expected(Token::Keyword("".to_owned())))
     }
     /// Attempts to parse a comparision statement
     pub fn compare(&mut self) -> Result<Expr, ParserError> {
@@ -38,9 +48,10 @@ impl Parser {
             .num_expr()
             .or_else(|_| self.str_expr())
             .or_else(|_| self.bool_expr())?;
+            println!("X: {lhs:?}");
 
         // Check if there's an equality sign, if not then return early.
-        if !self.match_rule(&[Token::EqSign]) {
+        if self.is_at_end() || !self.match_rule(&[Token::EqSign]) {
             return Ok(lhs);
         }
 

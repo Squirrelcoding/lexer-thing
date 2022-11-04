@@ -16,10 +16,7 @@ impl Stmt {
     pub fn execute(&self) -> Option<Expr> {
         match self {
             Stmt::Assignment(_) => todo!(),
-            Stmt::Print(str) => {
-                println!("{str}");
-                None
-            }
+            Stmt::Print(str) => None,
             Stmt::ExprStatement(expr) => Some(expr.to_owned()),
         }
     }
@@ -45,7 +42,7 @@ impl Stmt {
                         return Err(ParserError::Expected(Token::AssignmentSign));
                     }
 
-                    let expr = Parser::new(tokens[3..].to_vec()).expr()?;
+                    let expr = Parser::new(tokens[3..].to_vec()).expr()?.eval()?;
 
                     Ok(Self::Assignment(Assignment { ident, val: expr }))
                 }
@@ -110,6 +107,37 @@ mod stmt_tests {
             Stmt::Assignment(Assignment {
                 ident: "coolVariable".to_owned(),
                 val: Expr::Num(2)
+            })
+        )
+    }
+
+    #[test]
+    fn successful_bool_assignment() {
+        let tokens = vec![
+            Token::Keyword("let".to_owned()),
+            Token::Ident("coolVariable".to_owned()),
+            Token::AssignmentSign,
+            Token::LeftBracket,
+            Token::Keyword("true".to_owned()),
+            Token::EqSign,
+            Token::Keyword("false".to_owned()),
+            Token::RightBracket,
+            Token::Semi,
+        ];
+
+        println!("{tokens:?}");
+
+        let binding = Stmt::from_tokens(&tokens);
+
+        assert!(binding.is_ok());
+
+        let binding = binding.unwrap();
+
+        assert_eq!(
+            binding,
+            Stmt::Assignment(Assignment {
+                ident: "coolVariable".to_owned(),
+                val: Expr::Bool(false)
             })
         )
     }

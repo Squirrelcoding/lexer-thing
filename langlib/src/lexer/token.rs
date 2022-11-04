@@ -23,7 +23,7 @@ impl Token {
         if let Token::Op(op) = self {
             Ok(op)
         } else {
-            Err(TokenError::InvalidConversion)
+            Err(TokenError::FailedConversion)
         }
     }
 
@@ -31,7 +31,7 @@ impl Token {
         if let Token::Int(int) = self {
             Ok(int)
         } else {
-            Err(TokenError::InvalidConversion)
+            Err(TokenError::FailedConversion)
         }
     }
 
@@ -39,7 +39,7 @@ impl Token {
         if let Token::Ident(ident) = self {
             Ok(ident)
         } else {
-            Err(TokenError::InvalidConversion)
+            Err(TokenError::FailedConversion)
         }
     }
 
@@ -47,7 +47,7 @@ impl Token {
         if let Token::Keyword(keyword) = self {
             Ok(keyword)
         } else {
-            Err(TokenError::InvalidConversion)
+            Err(TokenError::FailedConversion)
         }
     }
 
@@ -60,7 +60,7 @@ impl Token {
                 "false" => Ok(Expr::Bool(false)),
                 _ => todo!(),
             },
-            _ => Err(TokenError::InvalidConversion),
+            _ => Err(TokenError::FailedConversion),
         }
     }
 }
@@ -68,5 +68,5 @@ impl Token {
 #[derive(Debug, Clone, Eq, PartialEq, Error)]
 pub enum TokenError {
     #[error("An invalid token conversion was attemped.")]
-    InvalidConversion,
+    FailedConversion,
 }
