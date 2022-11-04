@@ -1,6 +1,6 @@
 use crate::{
     expr::Expr,
-    lexer::{op::Op, token::Token},
+    lexer::{op::BinOp, token::Token},
 };
 
 use super::{error::ParserError, Parser};
@@ -11,21 +11,19 @@ impl Parser {
         let mut x: i32 = self.term()?.try_into()?;
 
         while !self.is_at_end() {
-            let op = match self.matches(&[Token::Op(Op::Add), Token::Op(Op::Sub)]) {
+            let op = match self.matches(&[Token::Op(BinOp::Add), Token::Op(BinOp::Sub)]) {
                 Some(op) => op,
                 None => break,
             }
-            .op()?;
+            .try_into_op()?;
 
             let other_term: i32 = self.term()?.try_into()?;
             match op {
-                Op::Add => x += other_term,
-                Op::Sub => x -= other_term,
-                _ => return Err(ParserError::Expected(Token::Op(Op::Add))),
+                BinOp::Add => x += other_term,
+                BinOp::Sub => x -= other_term,
+                _ => return Err(ParserError::Expected(Token::Op(BinOp::Add))),
             }
         }
-
-
 
         Ok(Expr::Num(x))
     }
@@ -38,17 +36,17 @@ impl Parser {
         // Get the operator given the allowed tokens
 
         while !self.is_at_end() {
-            let op = match self.matches(&[Token::Op(Op::Mul), Token::Op(Op::Div)]) {
+            let op = match self.matches(&[Token::Op(BinOp::Mul), Token::Op(BinOp::Div)]) {
                 Some(op) => op,
                 None => break,
             }
-            .op()?;
+            .try_into_op()?;
 
             let b: i32 = self.factor()?.try_into()?;
 
             match op {
-                Op::Mul => a *= b,
-                Op::Div => a /= b,
+                BinOp::Mul => a *= b,
+                BinOp::Div => a /= b,
                 _ => panic!(),
             }
         }
@@ -58,6 +56,8 @@ impl Parser {
 
     /// Attempts to parse a factor
     pub fn factor(&mut self) -> Result<Expr, ParserError> {
+
+        
         if self.matches(&[Token::LeftBracket]).is_some() {
             let result = self.num_expr()?;
 

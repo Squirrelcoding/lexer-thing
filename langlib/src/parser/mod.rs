@@ -25,6 +25,7 @@ impl Parser {
         let (first_tokens, len) =
             Parser::take_while(&self.tokens[..], |token| token != &Token::Semi)?;
 
+        // Advance over semicolon
         self.cursor += len + 1;
 
         let stmt = Stmt::from_tokens(first_tokens)?;
@@ -52,6 +53,7 @@ impl Parser {
         // Iterate through the possible tokens
         match possible_tokens.iter().find_map(|token| {
             // Return the token if the current token matches
+
             if &self.tokens[self.cursor] == token {
                 self.adv();
                 return Some(token.to_owned());
@@ -130,26 +132,6 @@ impl Parser {
         self.tokens[self.cursor].clone()
     }
 
-    /// Returns the next token
-    fn next(&self) -> Result<Token, ParserError> {
-        if self.is_at_end() {
-            return Err(ParserError::UnexpectedEOF);
-        }
-
-        Ok(self.tokens[self.cursor + 1].clone())
-    }
-
-    /// Returns the next token and increments the cursor
-    fn consume_next(&mut self) -> Result<Token, ParserError> {
-        if self.is_at_end() {
-            return Err(ParserError::UnexpectedEOF);
-        }
-
-        self.adv();
-
-        Ok(self.curr())
-    }
-
     /// Returns the token at the given index `i`
     fn at(&self, i: usize) -> Result<Token, ParserError> {
         if i >= self.tokens.len() {
@@ -192,8 +174,8 @@ impl Parser {
 #[cfg(test)]
 mod parser_tests {
 
-    use super::super::lexer::op::Op;
-    use crate::{expr::Expr, lexer::Lexer};
+    use super::super::lexer::op::BinOp;
+    use crate::{expr::Expr, lexer::Lexer, stmt::Assignment};
 
     use super::*;
 
@@ -205,17 +187,13 @@ mod parser_tests {
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
         let fourth = parser.at(4);
-        let next = parser.next();
 
         assert!(fourth.is_ok());
-        assert!(next.is_ok());
 
         let fourth = fourth.unwrap();
-        let next = next.unwrap();
 
         assert_eq!(fourth, Token::Int(1));
         assert_eq!(parser.curr(), Token::Keyword("let".to_owned()));
-        assert_eq!(next, Token::Ident("a".to_owned()));
 
         parser.adv();
 
@@ -268,15 +246,15 @@ mod parser_tests {
 
     #[test]
     fn matches_success() {
-        let pm = [Token::Op(Op::Add), Token::Op(Op::Sub)];
+        let pm = [Token::Op(BinOp::Add), Token::Op(BinOp::Sub)];
 
-        let a = "+ - *";
+        let a = "+ -3";
         let mut lexer = Lexer::new(a);
 
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
-        assert_eq!(parser.matches(&pm), Some(Token::Op(Op::Add)));
-        assert_eq!(parser.matches(&pm), Some(Token::Op(Op::Sub)));
+        assert_eq!(parser.matches(&pm), Some(Token::Op(BinOp::Add)));
+        assert_eq!(parser.matches(&pm), Some(Token::Op(BinOp::Sub)));
         assert_eq!(parser.matches(&pm), None)
     }
 
@@ -390,5 +368,26 @@ mod parser_tests {
         let result = result.unwrap();
 
         assert_eq!(result, Expr::Bool(false));
+    }
+
+    #[test]
+    pub fn test_unary_negation() {
+        let s = "let x = !(true == false)";
+
+        let mut lexer = Lexer::new(s);
+
+        let binding_stmt = Parser::new(lexer.tokenize().unwrap()).stmt();
+
+        assert!(binding_stmt.is_ok());
+
+        let binding_stmt = binding_stmt.unwrap();
+
+        assert_eq!(
+            binding_stmt,
+            Stmt::Assignment(Assignment {
+                ident: "x".to_owned(),
+                val: Expr::Bool(true)
+            })
+        );
     }
 }

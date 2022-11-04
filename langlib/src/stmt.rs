@@ -16,7 +16,7 @@ impl Stmt {
     pub fn execute(&self) -> Option<Expr> {
         match self {
             Stmt::Assignment(_) => todo!(),
-            Stmt::Print(str) => None,
+            Stmt::Print(_str) => None,
             Stmt::ExprStatement(expr) => Some(expr.to_owned()),
         }
     }
@@ -76,7 +76,7 @@ pub struct Assignment {
 mod stmt_tests {
     use crate::{
         expr::Expr,
-        lexer::{op::Op, token::Token},
+        lexer::{op::BinOp, token::Token},
         stmt::Assignment,
     };
 
@@ -90,7 +90,7 @@ mod stmt_tests {
             Token::AssignmentSign,
             Token::LeftBracket,
             Token::Int(1),
-            Token::Op(Op::Add),
+            Token::Op(BinOp::Add),
             Token::Int(1),
             Token::RightBracket,
             Token::Semi,
@@ -125,8 +125,6 @@ mod stmt_tests {
             Token::Semi,
         ];
 
-        println!("{tokens:?}");
-
         let binding = Stmt::from_tokens(&tokens);
 
         assert!(binding.is_ok());
@@ -150,7 +148,7 @@ mod stmt_tests {
             Token::AssignmentSign,
             Token::LeftBracket,
             Token::Int(1),
-            Token::Op(Op::Add),
+            Token::Op(BinOp::Add),
             Token::Int(1),
             Token::RightBracket,
             Token::Semi,

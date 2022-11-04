@@ -1,6 +1,8 @@
-use crate::parser::error::ParserError;
+use std::mem;
 
-use super::lexer::op::Op;
+use crate::{lexer::op::UnOp, parser::error::ParserError};
+
+use super::lexer::op::BinOp;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 
@@ -9,14 +11,30 @@ pub enum Expr {
     Str(String),
     Bool(bool),
     Bin(BinExpr),
+    Unary(UnOp, Box<Expr>),
 }
 
 impl Expr {
     pub fn eval(&self) -> Result<Expr, ParserError> {
-        if let Expr::Bin(expr) = self {
-            return expr.eval();
+        match self {
+            Expr::Bin(expr) => expr.eval(),
+            
+            Expr::Unary(op, expr) => {
+                if mem::discriminant(&Expr::Bool(false)) != mem::discriminant(&expr.eval()?) {
+                    return Err(ParserError::ExprError(ExprError::InvalidUnaryOperation));
+                }
+
+                let result: bool = expr.eval()?.try_into()?;
+
+
+                if op != &UnOp::Bang {
+                    return Err(ParserError::ExprError(ExprError::InvalidUnaryOperation));
+                }
+
+                Ok(Expr::Bool(!result))
+            }
+            _ => Ok(self.clone()),
         }
-        Ok(self.clone())
     }
 }
 
@@ -46,11 +64,11 @@ impl TryInto<bool> for Expr {
 pub struct BinExpr {
     lhs: Box<Expr>,
     rhs: Box<Expr>,
-    op: Op,
+    op: BinOp,
 }
 
 impl BinExpr {
-    pub fn new(lhs: Box<Expr>, rhs: Box<Expr>, op: Op) -> Self {
+    pub fn new(lhs: Box<Expr>, rhs: Box<Expr>, op: BinOp) -> Self {
         Self { lhs, rhs, op }
     }
 
@@ -72,4 +90,7 @@ pub enum ExprError {
 
     #[error("The parser failed to evaluate a binary expression")]
     FailedBinEvaluation,
+
+    #[error("The parser failed to evaluate a unary expression")]
+    InvalidUnaryOperation,
 }

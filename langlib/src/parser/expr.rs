@@ -1,6 +1,9 @@
 use crate::{
     expr::{BinExpr, Expr},
-    lexer::{op::Op, token::Token},
+    lexer::{
+        op::{BinOp, UnOp},
+        token::Token,
+    },
 };
 
 use super::{error::ParserError, Parser};
@@ -8,17 +11,28 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse an expression
     pub fn expr(&mut self) -> Result<Expr, ParserError> {
-        if self.match_rule(&[Token::LeftBracket]) {
-            let expr = self.expr()?;
+        self.compare()
+    }
 
-            if !self.match_rule(&[Token::RightBracket]) {
-                return Err(ParserError::Expected(Token::RightBracket));
+    /// Attempts to parse a string token, and advances if successful.
+    pub fn un_expr(&mut self) -> Result<Expr, ParserError> {
+        if let Some(token) = self.matches(&[Token::UnOp(UnOp::Bang), Token::UnOp(UnOp::Minus)]) {            
+            if self.match_rule(&[Token::LeftBracket]) {
+                let expr = self.expr()?;
+                
+                if !self.match_rule(&[Token::RightBracket]) {
+                    return Err(ParserError::Expected(Token::RightBracket));
+                }
+
+                return Ok(Expr::Unary(token.try_into_un_op()?, Box::new(expr)));
             }
 
-            return Ok(expr);
+            let expr = self.expr()?;
+
+            return Ok(Expr::Unary(token.try_into_un_op()?, Box::new(expr)));
         }
 
-        self.compare()
+        Err(ParserError::ExpectedExpr)
     }
 
     /// Attempts to parse a string token, and advances if successful.
@@ -48,7 +62,6 @@ impl Parser {
             .num_expr()
             .or_else(|_| self.str_expr())
             .or_else(|_| self.bool_expr())?;
-            println!("X: {lhs:?}");
 
         // Check if there's an equality sign, if not then return early.
         if self.is_at_end() || !self.match_rule(&[Token::EqSign]) {
@@ -63,7 +76,7 @@ impl Parser {
         Ok(Expr::Bin(BinExpr::new(
             Box::new(lhs),
             Box::new(rhs),
-            Op::EqSign,
+            BinOp::EqSign,
         )))
     }
 }

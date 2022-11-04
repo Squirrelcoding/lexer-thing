@@ -1,7 +1,10 @@
 pub mod op;
 pub mod token;
 
-use self::{op::Op, token::Token};
+use self::{
+    op::{BinOp, UnOp},
+    token::Token,
+};
 use std::num::IntErrorKind;
 
 #[derive(Debug)]
@@ -20,8 +23,18 @@ impl<'a> Lexer<'a> {
     pub fn tokenize(&mut self) -> Result<Vec<Token>, LexerError> {
         let mut vec = Vec::new();
 
-        while let Ok((tok, _)) = self.next_token() {
-            vec.push(tok);
+        // while let Ok((tok, _)) =  {
+        // vec.push(tok);
+        // }
+
+        loop {
+            match self.next_token() {
+                Ok(token) => vec.push(token.0),
+                Err(err) => match err {
+                    LexerError::UnexpectedEOF => break,
+                    _ => return Err(err),
+                },
+            }
         }
 
         Ok(vec)
@@ -50,10 +63,25 @@ impl<'a> Lexer<'a> {
         };
 
         match next {
-            '+' => Ok((Token::Op(Op::Add), 1)),
-            '-' => Ok((Token::Op(Op::Sub), 1)),
-            '*' => Ok((Token::Op(Op::Mul), 1)),
-            '/' => Ok((Token::Op(Op::Div), 1)),
+            '+' => Ok((Token::Op(BinOp::Add), 1)),
+            '-' => {
+                // if  {
+                // return Ok((Token::EqSign, 2));
+                // }
+
+                match data.chars().nth(1) {
+                    Some(c) => {
+                        if c.is_numeric() {
+                            return Ok((Token::Op(BinOp::Sub), 1));
+                        }
+
+                        Ok((Token::UnOp(UnOp::Bang), 1))
+                    }
+                    None => Err(LexerError::UnexpectedEOF),
+                }
+            }
+            '*' => Ok((Token::Op(BinOp::Mul), 1)),
+            '/' => Ok((Token::Op(BinOp::Div), 1)),
             '=' => {
                 if Some('=') == data.chars().nth(1) {
                     return Ok((Token::EqSign, 2));
@@ -63,6 +91,7 @@ impl<'a> Lexer<'a> {
             '(' => Ok((Token::LeftBracket, 1)),
             ')' => Ok((Token::RightBracket, 1)),
             ';' => Ok((Token::Semi, 1)),
+            '!' => Ok((Token::UnOp(UnOp::Bang), 1)),
             '"' | '\'' => Lexer::tokenize_string(data),
             '0'..='9' => Lexer::tokenize_num(data),
             _ => Lexer::tokenize_word(data),
@@ -200,7 +229,7 @@ mod lexer_tokenizer_tests {
 
         let token = token.unwrap();
 
-        assert_eq!(token.0, Token::Op(Op::Add));
+        assert_eq!(token.0, Token::Op(BinOp::Add));
 
         let num = "123456789";
 
