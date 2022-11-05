@@ -32,6 +32,8 @@ impl Parser {
             return Ok(Expr::Unary(token.try_into_un_op()?, Box::new(expr)));
         }
 
+
+
         match self.compare() {
             Ok(expr) => expr.eval(),
             Err(err) => Err(err),
@@ -65,6 +67,7 @@ impl Parser {
             .num_expr()
             .or_else(|_| self.str_expr())
             .or_else(|_| self.bool_expr())?;
+
 
         // Check if there's an equality sign, if not then return early.
         if self.is_at_end() || !self.match_rule(&[Token::EqSign]) {

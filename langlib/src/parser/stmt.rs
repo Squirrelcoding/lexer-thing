@@ -39,6 +39,7 @@ impl Parser {
                             // Get the identier and value
                             let ident = self.at(self.cursor - 2)?.try_into_ident()?;
 
+
                             let expr = self.expr()?;
 
                             return Ok(Stmt::Assignment(Assignment { ident, val: expr }));
@@ -50,12 +51,18 @@ impl Parser {
                     }
                     Keyword::Print => {
                         if self.match_rule(&[Token::Keyword(Keyword::Print)]) {
-                            if let Token::String(string) = self.curr() {
+                            // if let Token::String(string) = self.curr() {
 
-                                self.adv();
+                            //     // weird edge case thingy
+                            //     self.adv();
 
-                                return Ok(Stmt::Print(string));
-                            }
+                            //     return Ok(Stmt::Print(Expr::Str(string)));
+                            // }
+
+                            let expr = self.expr()?;
+                            // self.adv();
+
+                            return Ok(Stmt::Print(expr));
                         }
 
                         // Reset position

@@ -227,7 +227,7 @@ mod parser_tests {
     fn matches_success() {
         let pm = [Token::Op(BinOp::Add), Token::Op(BinOp::Sub)];
 
-        let a = "+ -3";
+        let a = "+ - 3";
         let mut lexer = Lexer::new(a);
 
         let mut parser = Parser::new(lexer.tokenize().unwrap());
@@ -391,7 +391,7 @@ mod parser_tests {
 
     #[test]
     pub fn test_parse_statements() {
-        let s = "let x = !(\"this is a string.\" == \"this is another string.\"); let y = (2 + 4) / 2; let z = !true; print \"This is a very cool string.\";";
+        let s = "let x = !(\"this is a string.\" == \"this is another string.\"); print (23 - 5) / 2; let y = (2 + 4) / 2; let z = !true; print \"This is a very cool string.\";";
 
         let mut lexer = Lexer::new(s);
 
@@ -410,6 +410,7 @@ mod parser_tests {
                     ident: "x".to_owned(),
                     val: Expr::Bool(true)
                 }),
+                Stmt::Print(Expr::Num(9)),
                 Stmt::Assignment(Assignment {
                     ident: "y".to_owned(),
                     val: Expr::Num(3)
@@ -418,7 +419,7 @@ mod parser_tests {
                     ident: "z".to_owned(),
                     val: Expr::Bool(false)
                 }),
-                Stmt::Print("This is a very cool string.".to_owned())
+                Stmt::Print(Expr::Str("This is a very cool string.".to_owned()))
             ]
         )
     }

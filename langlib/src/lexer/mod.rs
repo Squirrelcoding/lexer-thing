@@ -64,22 +64,7 @@ impl<'a> Lexer<'a> {
 
         match next {
             '+' => Ok((Token::Op(BinOp::Add), 1)),
-            '-' => {
-                // if  {
-                // return Ok((Token::EqSign, 2));
-                // }
-
-                match data.chars().nth(1) {
-                    Some(c) => {
-                        if c.is_numeric() {
-                            return Ok((Token::Op(BinOp::Sub), 1));
-                        }
-
-                        Ok((Token::UnOp(UnOp::Bang), 1))
-                    }
-                    None => Err(LexerError::UnexpectedEOF),
-                }
-            }
+            '-' => Ok((Token::Op(BinOp::Sub), 1)),
             '*' => Ok((Token::Op(BinOp::Mul), 1)),
             '/' => Ok((Token::Op(BinOp::Div), 1)),
             '=' => {

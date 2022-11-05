@@ -8,7 +8,7 @@ use super::expr::Expr;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Stmt {
     Assignment(Assignment),
-    Print(String),
+    Print(Expr),
     ExprStatement(Expr),
 }
 
