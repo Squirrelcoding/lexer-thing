@@ -56,8 +56,6 @@ impl Parser {
 
     /// Attempts to parse a factor
     pub fn factor(&mut self) -> Result<Expr, ParserError> {
-
-        
         if self.matches(&[Token::LeftBracket]).is_some() {
             let result = self.num_expr()?;
 

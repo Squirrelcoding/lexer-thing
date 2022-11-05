@@ -80,6 +80,11 @@ pub enum TokenError {
     FailedConversion,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum Keyword {
+
+}
+
 #[cfg(test)]
 
 mod token_tests {

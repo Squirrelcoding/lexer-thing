@@ -138,6 +138,7 @@ impl<'a> Lexer<'a> {
             "let" => Token::Keyword("let".to_owned()),
             "true" => Token::Keyword("true".to_owned()),
             "false" => Token::Keyword("false".to_owned()),
+            "print" => Token::Keyword("print".to_owned()),
             s => Token::Ident(s.to_owned()),
         };
 

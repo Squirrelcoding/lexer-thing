@@ -18,14 +18,13 @@ impl Expr {
     pub fn eval(&self) -> Result<Expr, ParserError> {
         match self {
             Expr::Bin(expr) => expr.eval(),
-            
+
             Expr::Unary(op, expr) => {
                 if mem::discriminant(&Expr::Bool(false)) != mem::discriminant(&expr.eval()?) {
                     return Err(ParserError::ExprError(ExprError::InvalidUnaryOperation));
                 }
 
                 let result: bool = expr.eval()?.try_into()?;
-
 
                 if op != &UnOp::Bang {
                     return Err(ParserError::ExprError(ExprError::InvalidUnaryOperation));

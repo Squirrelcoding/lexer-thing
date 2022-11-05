@@ -25,22 +25,29 @@ impl Parser {
         let (first_tokens, len) =
             Parser::take_while(&self.tokens[..], |token| token != &Token::Semi)?;
 
-        // Advance over semicolon
-        self.cursor += len + 1;
-
         let stmt = Stmt::from_tokens(first_tokens)?;
 
+        // Skip forward
+        self.cursor += len;
+        
         stmt_vec.push(stmt);
 
+        
         while !self.is_at_end() {
             let (tokens, len) =
-                Parser::take_while(&self.tokens[self.cursor..], |token| token != &Token::Semi)?;
+            Parser::take_while(&self.tokens[self.cursor..], |token| token != &Token::Semi)?;
+            
 
             let stmt = Stmt::from_tokens(tokens)?;
+
+            // Advance semicolon
+            self.adv();
 
             stmt_vec.push(stmt);
 
             self.cursor += len;
+
+
         }
 
         Ok(stmt_vec)
@@ -164,7 +171,7 @@ impl Parser {
             .unwrap_or(tokens.len());
 
         if x == 0 {
-            return Err(ParserError::RecursionDetected);
+            return Err(ParserError::EmptyMatch);
         }
 
         Ok((&tokens[..x], x))
@@ -175,7 +182,7 @@ impl Parser {
 mod parser_tests {
 
     use super::super::lexer::op::BinOp;
-    use crate::{expr::Expr, lexer::Lexer, stmt::Assignment};
+    use crate::{expr::Expr, lexer::{Lexer, op::UnOp}, stmt::Assignment};
 
     use super::*;
 
@@ -372,7 +379,28 @@ mod parser_tests {
 
     #[test]
     pub fn test_unary_negation() {
-        let s = "let x = !(true == false)";
+        let s = "let x = !(true == false);";
+
+        let mut lexer = Lexer::new(s);
+
+        let binding_stmt = Parser::new(lexer.tokenize().unwrap()).stmt();
+
+        assert!(binding_stmt.is_ok());
+
+        let binding_stmt = binding_stmt.unwrap();
+
+        assert_eq!(
+            binding_stmt,
+            Stmt::Assignment(Assignment {
+                ident: "x".to_owned(),
+                val: Expr::Bool(true)
+            })
+        );
+    }
+
+    #[test]
+    pub fn test_unary_negation_but_with_strings() {
+        let s = "let x = !(\"this is a string.\" == \"this is another string.\");";
 
         let mut lexer = Lexer::new(s);
 

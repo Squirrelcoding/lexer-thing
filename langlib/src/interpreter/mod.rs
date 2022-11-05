@@ -16,7 +16,7 @@ impl Interpreter {
         Self { instructions }
     }
 
-    pub fn interpret(&self) {        
+    pub fn interpret(&self) {
         self.instructions.iter().for_each(|stmt| {
             stmt.execute();
         });

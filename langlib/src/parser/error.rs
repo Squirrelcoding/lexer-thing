@@ -39,8 +39,8 @@ pub enum ParserError {
     #[error("Failed to parse statement")]
     BadStatement,
 
-    #[error("A case where recursion in the parser was provoked has been encountered.")]
-    RecursionDetected,
+    #[error("An internal error within the parser occured.")]
+    EmptyMatch,
 
     #[error("An invalid comparision was attempted to be made.")]
     InvalidComparision,

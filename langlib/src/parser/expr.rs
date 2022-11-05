@@ -11,15 +11,15 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse an expression
     pub fn expr(&mut self) -> Result<Expr, ParserError> {
-        self.compare()
+        self.un_expr()?.eval()
     }
 
     /// Attempts to parse a string token, and advances if successful.
     pub fn un_expr(&mut self) -> Result<Expr, ParserError> {
-        if let Some(token) = self.matches(&[Token::UnOp(UnOp::Bang), Token::UnOp(UnOp::Minus)]) {            
+        if let Some(token) = self.matches(&[Token::UnOp(UnOp::Bang), Token::UnOp(UnOp::Minus)]) {
             if self.match_rule(&[Token::LeftBracket]) {
                 let expr = self.expr()?;
-                
+
                 if !self.match_rule(&[Token::RightBracket]) {
                     return Err(ParserError::Expected(Token::RightBracket));
                 }
@@ -27,12 +27,15 @@ impl Parser {
                 return Ok(Expr::Unary(token.try_into_un_op()?, Box::new(expr)));
             }
 
-            let expr = self.expr()?;
+            let expr = self.expr()?.eval()?;
 
             return Ok(Expr::Unary(token.try_into_un_op()?, Box::new(expr)));
         }
 
-        Err(ParserError::ExpectedExpr)
+        match self.compare() {
+            Ok(expr) => expr.eval(),
+            Err(err) => Err(err),
+        }
     }
 
     /// Attempts to parse a string token, and advances if successful.

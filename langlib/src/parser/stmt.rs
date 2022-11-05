@@ -39,9 +39,6 @@ impl Parser {
 
                             let expr = self.expr()?;
 
-                            // Advance because of semicolon
-                            self.adv();
-
                             return Ok(Stmt::Assignment(Assignment { ident, val: expr }));
                         }
                         Err(ParserError::BadStatement)
