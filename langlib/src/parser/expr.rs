@@ -2,7 +2,7 @@ use crate::{
     expr::{BinExpr, Expr},
     lexer::{
         op::{BinOp, UnOp},
-        token::Token,
+        token::{Keyword, Token},
     },
 };
 
@@ -51,13 +51,13 @@ impl Parser {
     /// Attempts to match a boolean token, and advances if successful.
     pub fn bool_expr(&mut self) -> Result<Expr, ParserError> {
         if let Some(bool_val) = self.matches(&[
-            Token::Keyword("true".to_owned()),
-            Token::Keyword("false".to_owned()),
+            Token::Keyword(Keyword::True),
+            Token::Keyword(Keyword::False),
         ]) {
             return Ok(bool_val.into_expr()?);
         }
 
-        Err(ParserError::Expected(Token::Keyword("".to_owned())))
+        Err(ParserError::Expected(Token::Keyword(Keyword::True)))
     }
     /// Attempts to parse a comparision statement
     pub fn compare(&mut self) -> Result<Expr, ParserError> {

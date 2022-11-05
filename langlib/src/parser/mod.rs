@@ -22,32 +22,24 @@ impl Parser {
     pub fn get_statements(&mut self) -> Result<Vec<Stmt>, ParserError> {
         let mut stmt_vec = Vec::new();
 
-        let (first_tokens, len) =
-            Parser::take_while(&self.tokens[..], |token| token != &Token::Semi)?;
+        let stmt = self.stmt()?;
 
-        let stmt = Stmt::from_tokens(first_tokens)?;
+        println!("{stmt:?}");
 
-        // Skip forward
-        self.cursor += len;
-        
+
         stmt_vec.push(stmt);
+        
+        self.adv();
 
+        
         
         while !self.is_at_end() {
-            let (tokens, len) =
-            Parser::take_while(&self.tokens[self.cursor..], |token| token != &Token::Semi)?;
-            
+            let stmt = self.stmt()?;
 
-            let stmt = Stmt::from_tokens(tokens)?;
-
-            // Advance semicolon
+            // Advance for some weird edge case.
             self.adv();
 
             stmt_vec.push(stmt);
-
-            self.cursor += len;
-
-
         }
 
         Ok(stmt_vec)
@@ -152,37 +144,17 @@ impl Parser {
     pub fn is_at_end(&self) -> bool {
         self.cursor + 1 >= self.tokens.len()
     }
-
-    /// A take_while method like the lexers but for tokens
-    fn take_while<F>(tokens: &[Token], predicate: F) -> Result<(&[Token], usize), ParserError>
-    where
-        F: Fn(&Token) -> bool,
-    {
-        let x = tokens
-            .iter()
-            .enumerate()
-            .find_map(|(idx, token)| {
-                if predicate(token) {
-                    return None;
-                }
-
-                Some(idx)
-            })
-            .unwrap_or(tokens.len());
-
-        if x == 0 {
-            return Err(ParserError::EmptyMatch);
-        }
-
-        Ok((&tokens[..x], x))
-    }
 }
 
 #[cfg(test)]
 mod parser_tests {
 
     use super::super::lexer::op::BinOp;
-    use crate::{expr::Expr, lexer::{Lexer, op::UnOp}, stmt::Assignment};
+    use crate::{
+        expr::Expr,
+        lexer::{token::Keyword, Lexer},
+        stmt::Assignment,
+    };
 
     use super::*;
 
@@ -200,11 +172,11 @@ mod parser_tests {
         let fourth = fourth.unwrap();
 
         assert_eq!(fourth, Token::Int(1));
-        assert_eq!(parser.curr(), Token::Keyword("let".to_owned()));
+        assert_eq!(parser.curr(), Token::Keyword(Keyword::Let));
 
         parser.adv();
 
-        assert_eq!(parser.prev(), Token::Keyword("let".to_owned()));
+        assert_eq!(parser.prev(), Token::Keyword(Keyword::Let));
 
         (1..(parser.tokens.len() - 1)).for_each(|_| {
             parser.adv();
@@ -223,7 +195,7 @@ mod parser_tests {
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
         let rules = [
-            Token::Keyword("let".to_owned()),
+            Token::Keyword(Keyword::Let),
             Token::Ident("x".to_owned()),
             Token::AssignmentSign,
             Token::Int(5),
@@ -241,7 +213,7 @@ mod parser_tests {
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
         let rules = [
-            Token::Keyword("let".to_owned()),
+            Token::Keyword(Keyword::Let),
             Token::Ident("x".to_owned()),
             Token::AssignmentSign,
             Token::Int(0),
@@ -278,8 +250,6 @@ mod parser_tests {
         let result = result.unwrap();
 
         assert!(result.eval().is_ok());
-
-        let result = result.eval().unwrap();
     }
 
     #[test]
@@ -417,5 +387,39 @@ mod parser_tests {
                 val: Expr::Bool(true)
             })
         );
+    }
+
+    #[test]
+    pub fn test_parse_statements() {
+        let s = "let x = !(\"this is a string.\" == \"this is another string.\"); let y = (2 + 4) / 2; let z = !true; print \"This is a very cool string.\";";
+
+        let mut lexer = Lexer::new(s);
+
+        let mut parser = Parser::new(lexer.tokenize().unwrap());
+
+        let statements = parser.get_statements();
+
+        assert!(statements.is_ok());
+
+        let statements = statements.unwrap();
+
+        assert_eq!(
+            statements,
+            vec![
+                Stmt::Assignment(Assignment {
+                    ident: "x".to_owned(),
+                    val: Expr::Bool(true)
+                }),
+                Stmt::Assignment(Assignment {
+                    ident: "y".to_owned(),
+                    val: Expr::Num(3)
+                }),
+                Stmt::Assignment(Assignment {
+                    ident: "z".to_owned(),
+                    val: Expr::Bool(false)
+                }),
+                Stmt::Print("This is a very cool string.".to_owned())
+            ]
+        )
     }
 }

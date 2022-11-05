@@ -12,6 +12,7 @@ pub enum Expr {
     Bool(bool),
     Bin(BinExpr),
     Unary(UnOp, Box<Expr>),
+    Null,
 }
 
 impl Expr {

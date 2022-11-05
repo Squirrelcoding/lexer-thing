@@ -3,7 +3,7 @@ pub mod token;
 
 use self::{
     op::{BinOp, UnOp},
-    token::Token,
+    token::{Keyword, Token},
 };
 use std::num::IntErrorKind;
 
@@ -135,10 +135,10 @@ impl<'a> Lexer<'a> {
         let (word, len) = Lexer::take_while(data, |c| c.is_alphanumeric())?;
 
         let word = match word.as_str() {
-            "let" => Token::Keyword("let".to_owned()),
-            "true" => Token::Keyword("true".to_owned()),
-            "false" => Token::Keyword("false".to_owned()),
-            "print" => Token::Keyword("print".to_owned()),
+            "let" => Token::Keyword(Keyword::Let),
+            "true" => Token::Keyword(Keyword::True),
+            "false" => Token::Keyword(Keyword::False),
+            "print" => Token::Keyword(Keyword::Print),
             s => Token::Ident(s.to_owned()),
         };
 
@@ -289,12 +289,12 @@ mod lexer_tokenizer_tests {
         assert_eq!(
             tokens,
             vec![
-                Token::Keyword("let".to_owned()),
+                Token::Keyword(Keyword::Let),
                 Token::Ident("a".to_owned()),
                 Token::AssignmentSign,
                 Token::Int(3),
                 Token::Semi,
-                Token::Keyword("let".to_owned()),
+                Token::Keyword(Keyword::Let),
                 Token::Ident("b".to_owned()),
                 Token::EqSign,
                 Token::String("4".to_owned()),

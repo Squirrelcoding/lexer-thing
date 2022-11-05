@@ -16,7 +16,7 @@ pub enum Token {
     LeftBracket,
     RightBracket,
     Ident(String),
-    Keyword(String),
+    Keyword(Keyword),
 }
 
 impl Token {
@@ -52,7 +52,7 @@ impl Token {
         }
     }
 
-    pub fn try_into_keyword(self) -> Result<String, TokenError> {
+    pub fn try_into_keyword(self) -> Result<Keyword, TokenError> {
         if let Token::Keyword(keyword) = self {
             Ok(keyword)
         } else {
@@ -64,10 +64,10 @@ impl Token {
         match self {
             Token::Int(int) => Ok(Expr::Num(int)),
             Token::String(string) => Ok(Expr::Str(string)),
-            Token::Keyword(val) => match val.as_str() {
-                "true" => Ok(Expr::Bool(true)),
-                "false" => Ok(Expr::Bool(false)),
-                _ => todo!(),
+            Token::Keyword(keyword) => match keyword {
+                Keyword::True => Ok(Expr::Bool(true)),
+                Keyword::False => Ok(Expr::Bool(false)),
+                _ => Ok(Expr::Null),
             },
             _ => Err(TokenError::FailedConversion),
         }
@@ -81,8 +81,12 @@ pub enum TokenError {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
+/// An enum representing the keywords
 pub enum Keyword {
-
+    True,
+    False,
+    Let,
+    Print,
 }
 
 #[cfg(test)]
@@ -90,7 +94,10 @@ pub enum Keyword {
 mod token_tests {
     use crate::{
         expr::Expr,
-        lexer::op::{BinOp, UnOp},
+        lexer::{
+            op::{BinOp, UnOp},
+            token::Keyword,
+        },
     };
 
     use super::Token;
@@ -101,7 +108,7 @@ mod token_tests {
         let b = Token::Int(32);
         let c = Token::UnOp(UnOp::Bang);
         let d = Token::Ident("hello".to_owned());
-        let e = Token::Keyword("keyword".to_owned());
+        let e = Token::Keyword(Keyword::True);
 
         assert!(a.try_into_op().is_ok());
         assert!(b.try_into_int().is_ok());
@@ -116,7 +123,7 @@ mod token_tests {
         let b = Token::Int(32);
         let c = Token::UnOp(UnOp::Bang);
         let d = Token::Ident("hello".to_owned());
-        let e = Token::Keyword("keyword".to_owned());
+        let e = Token::Keyword(Keyword::True);
 
         assert!(e.try_into_op().is_err());
         assert!(d.try_into_int().is_err());
@@ -129,8 +136,8 @@ mod token_tests {
     fn successful_into_exprs() {
         let string = Token::String("This is a cool string.".to_owned()).into_expr();
         let num = Token::Int(23).into_expr();
-        let true_bool = Token::Keyword("true".to_owned()).into_expr();
-        let false_bool = Token::Keyword("false".to_owned()).into_expr();
+        let true_bool = Token::Keyword(Keyword::True).into_expr();
+        let false_bool = Token::Keyword(Keyword::False).into_expr();
 
         assert!(string.is_ok());
         assert!(num.is_ok());

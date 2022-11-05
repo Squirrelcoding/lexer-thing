@@ -1,5 +1,5 @@
 use crate::{
-    lexer::token::Token,
+    lexer::token::{Keyword, Token},
     parser::{error::ParserError, Parser},
 };
 
@@ -24,8 +24,8 @@ impl Stmt {
     #[allow(clippy::single_match)]
     pub fn from_tokens(tokens: &[Token]) -> Result<Self, ParserError> {
         match &tokens[0] {
-            Token::Keyword(keyword) => match keyword.as_str() {
-                "let" => {
+            Token::Keyword(keyword) => match keyword {
+                Keyword::Let => {
                     // let statements must be at least 4 tokens long.
                     if tokens.len() < 4 {
                         return Err(ParserError::InvalidLetStatement);
@@ -76,7 +76,10 @@ pub struct Assignment {
 mod stmt_tests {
     use crate::{
         expr::Expr,
-        lexer::{op::BinOp, token::Token},
+        lexer::{
+            op::BinOp,
+            token::{Keyword, Token},
+        },
         stmt::Assignment,
     };
 
@@ -85,7 +88,7 @@ mod stmt_tests {
     #[test]
     fn successful_let_stmt() {
         let tokens = vec![
-            Token::Keyword("let".to_owned()),
+            Token::Keyword(Keyword::Let),
             Token::Ident("coolVariable".to_owned()),
             Token::AssignmentSign,
             Token::LeftBracket,
@@ -114,13 +117,13 @@ mod stmt_tests {
     #[test]
     fn successful_bool_assignment() {
         let tokens = vec![
-            Token::Keyword("let".to_owned()),
+            Token::Keyword(Keyword::Let),
             Token::Ident("coolVariable".to_owned()),
             Token::AssignmentSign,
             Token::LeftBracket,
-            Token::Keyword("true".to_owned()),
+            Token::Keyword(Keyword::True),
             Token::EqSign,
-            Token::Keyword("false".to_owned()),
+            Token::Keyword(Keyword::False),
             Token::RightBracket,
             Token::Semi,
         ];
@@ -143,7 +146,7 @@ mod stmt_tests {
     #[test]
     fn bad_let_stmt() {
         let tokens = vec![
-            Token::Keyword("let".to_owned()),
+            Token::Keyword(Keyword::Let),
             Token::Ident("coolVariable".to_owned()),
             Token::AssignmentSign,
             Token::LeftBracket,
