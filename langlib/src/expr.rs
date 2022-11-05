@@ -1,4 +1,6 @@
-use std::mem;
+use std::{mem, fmt::Display};
+
+use colored::Colorize;
 
 use crate::{lexer::op::UnOp, parser::error::ParserError};
 
@@ -34,6 +36,22 @@ impl Expr {
                 Ok(Expr::Bool(!result))
             }
             _ => Ok(self.clone()),
+        }
+    }
+}
+
+impl Display for Expr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Expr::Num(num) => write!(f, "{}", format!("{num}").yellow()),
+
+            Expr::Str(string) => write!(f, "{}", format!("\"{string}\"").green()),
+
+            Expr::Bool(bool) => write!(f, "{}", format!("{bool}").yellow()),
+            Expr::Bin(_) => todo!(),
+
+            Expr::Unary(_, _) => todo!(),
+            Expr::Null => todo!(),
         }
     }
 }

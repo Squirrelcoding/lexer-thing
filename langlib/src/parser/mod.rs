@@ -24,8 +24,6 @@ impl Parser {
 
         let stmt = self.stmt()?;
 
-        println!("{stmt:?}");
-
 
         stmt_vec.push(stmt);
         
@@ -391,7 +389,16 @@ mod parser_tests {
 
     #[test]
     pub fn test_parse_statements() {
-        let s = "let x = !(\"this is a string.\" == \"this is another string.\"); print (23 - 5) / 2; let y = (2 + 4) / 2; let z = !true; print \"This is a very cool string.\";";
+        let s = "let    
+    
+        x =   !        (\"this is a string.\"                == \"this is another string.\"); print (23-5)/ 2; let y =  (           2 + 4) / 2; let z = !   true; 
+        
+        
+        
+        print 
+        
+        
+        \"This is a very cool string.\";";
 
         let mut lexer = Lexer::new(s);
 

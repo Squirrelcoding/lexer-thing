@@ -16,7 +16,11 @@ impl Stmt {
     pub fn execute(&self) -> Option<Expr> {
         match self {
             Stmt::Assignment(_) => todo!(),
-            Stmt::Print(_str) => None,
+            Stmt::Print(str) => {
+                println!("{str}");
+
+                None
+            },
             Stmt::ExprStatement(expr) => Some(expr.to_owned()),
         }
     }

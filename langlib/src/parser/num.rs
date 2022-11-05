@@ -10,14 +10,9 @@ impl Parser {
     pub fn num_expr(&mut self) -> Result<Expr, ParserError> {
         let mut x: i32 = self.term()?.try_into()?;
 
-        println!("X: {x:?}");
-
-
         while !self.is_at_end() {
 
-            println!("{:?}", self.curr());
-
-            let op = match self.matches(&[Token::Op(BinOp::Add), Token::Op(BinOp::Sub)]) {
+ let op = match self.matches(&[Token::Op(BinOp::Add), Token::Op(BinOp::Sub)]) {
                 Some(op) => op,
                 None => break,
             }
@@ -25,7 +20,6 @@ impl Parser {
 
             let other_term: i32 = self.term()?.try_into()?;
             
-            println!("other term: {other_term}");
 
             match op {
                 BinOp::Add => x += other_term,

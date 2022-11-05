@@ -1,19 +1,22 @@
-use langlib::{interpreter::Err, lexer::Lexer, parser::Parser};
+use langlib::{interpreter::{Err, Interpreter}, lexer::Lexer, parser::Parser};
 
 fn main() -> Result<(), Err> {
-    let x = "let x = !(\"this is a string.\" == \"this is another string.\"); print (23 -5) / 2; let y = (2 + 4) / 2; let z = !true; print \"This is a very cool string.\";";
+    let x = "
+    
+    
+    print (324 + 3) / 4;
+    print \"THIS IS A REALLY COOL STRING.\";
+    
+    ";
 
     let tokens = Lexer::new(x).tokenize()?;
-
-    println!("{tokens:?}");
-
     let mut parser = Parser::new(tokens);
 
-    println!("{:?}", parser.get_statements()?);
+    let statements = parser.get_statements()?;
 
-    // println!("{:?}", parser.get_statements());
+    let interpreter = Interpreter::new(statements);
 
-    // Interpreter::repl()?;
+    interpreter.interpret();
 
     Ok(())
 }

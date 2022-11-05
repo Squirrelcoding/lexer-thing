@@ -35,7 +35,7 @@ impl Interpreter {
                 .expr()?
                 .eval()?;
 
-            println!("{result:?}");
+            println!("{result}");
         }
 
         Ok(())
