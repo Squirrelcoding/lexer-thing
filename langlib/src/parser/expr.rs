@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 use crate::{
     expr::{BinExpr, Expr},
     lexer::{
@@ -32,8 +34,6 @@ impl Parser {
             return Ok(Expr::Unary(token.try_into_un_op()?, Box::new(expr)));
         }
 
-
-
         match self.compare() {
             Ok(expr) => expr.eval(),
             Err(err) => Err(err),
@@ -45,6 +45,16 @@ impl Parser {
         if let Token::String(string) = self.curr() {
             self.adv();
             return Ok(Expr::Str(string));
+        }
+
+        Err(ParserError::ExpectedExpr)
+    }
+
+    /// Attempts to parse a variable token, and advances if successful.
+    pub fn var_expr(&mut self) -> Result<Expr, ParserError> {
+        if let Token::Ident(string) = self.curr() {
+            self.adv();
+            return Ok(Expr::Var(string));
         }
 
         Err(ParserError::ExpectedExpr)
@@ -65,9 +75,9 @@ impl Parser {
     pub fn compare(&mut self) -> Result<Expr, ParserError> {
         let lhs = self
             .num_expr()
+            .or_else(|_| self.var_expr())
             .or_else(|_| self.str_expr())
             .or_else(|_| self.bool_expr())?;
-
 
         // Check if there's an equality sign, if not then return early.
         if self.is_at_end() || !self.match_rule(&[Token::EqSign]) {

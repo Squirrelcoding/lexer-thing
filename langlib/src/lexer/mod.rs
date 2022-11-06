@@ -71,7 +71,7 @@ impl<'a> Lexer<'a> {
                 if Some('=') == data.chars().nth(1) {
                     return Ok((Token::EqSign, 2));
                 }
-                Ok((Token::AssignmentSign, 1))
+                Ok((Token::DeclarationSign, 1))
             }
             '(' => Ok((Token::LeftBracket, 1)),
             ')' => Ok((Token::RightBracket, 1)),
@@ -276,7 +276,7 @@ mod lexer_tokenizer_tests {
             vec![
                 Token::Keyword(Keyword::Let),
                 Token::Ident("a".to_owned()),
-                Token::AssignmentSign,
+                Token::DeclarationSign,
                 Token::Int(3),
                 Token::Semi,
                 Token::Keyword(Keyword::Let),

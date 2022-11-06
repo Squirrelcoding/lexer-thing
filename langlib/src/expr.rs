@@ -1,4 +1,4 @@
-use std::{mem, fmt::Display};
+use std::{fmt::Display, mem};
 
 use colored::Colorize;
 
@@ -11,6 +11,7 @@ use super::lexer::op::BinOp;
 pub enum Expr {
     Num(i32),
     Str(String),
+    Var(String),
     Bool(bool),
     Bin(BinExpr),
     Unary(UnOp, Box<Expr>),
@@ -48,10 +49,7 @@ impl Display for Expr {
             Expr::Str(string) => write!(f, "{}", format!("\"{string}\"").green()),
 
             Expr::Bool(bool) => write!(f, "{}", format!("{bool}").yellow()),
-            Expr::Bin(_) => todo!(),
-
-            Expr::Unary(_, _) => todo!(),
-            Expr::Null => todo!(),
+            other => write!(f, "{other:?}"),
         }
     }
 }

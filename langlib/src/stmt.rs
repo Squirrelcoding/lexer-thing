@@ -7,24 +7,12 @@ use super::expr::Expr;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Stmt {
-    Assignment(Assignment),
+    Declaration(Declaration),
     Print(Expr),
     ExprStatement(Expr),
 }
 
 impl Stmt {
-    pub fn execute(&self) -> Option<Expr> {
-        match self {
-            Stmt::Assignment(_) => todo!(),
-            Stmt::Print(str) => {
-                println!("{str}");
-
-                None
-            },
-            Stmt::ExprStatement(expr) => Some(expr.to_owned()),
-        }
-    }
-
     #[allow(clippy::single_match)]
     pub fn from_tokens(tokens: &[Token]) -> Result<Self, ParserError> {
         match &tokens[0] {
@@ -41,14 +29,14 @@ impl Stmt {
                         _ => return Err(ParserError::Expected(Token::Ident("".to_owned()))),
                     };
 
-                    // Check if there is an assignment sign.
-                    if Token::AssignmentSign != tokens[2] {
-                        return Err(ParserError::Expected(Token::AssignmentSign));
+                    // Check if there is an Declaration sign.
+                    if Token::DeclarationSign != tokens[2] {
+                        return Err(ParserError::Expected(Token::DeclarationSign));
                     }
 
                     let expr = Parser::new(tokens[3..].to_vec()).expr()?.eval()?;
 
-                    Ok(Self::Assignment(Assignment { ident, val: expr }))
+                    Ok(Self::Declaration(Declaration { ident, val: expr }))
                 }
                 _ => Err(ParserError::StmtErr(StmtErr::UnknownKeyword)),
             },
@@ -71,7 +59,7 @@ pub enum StmtErr {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Assignment {
+pub struct Declaration {
     pub ident: String,
     pub val: Expr,
 }
@@ -84,7 +72,7 @@ mod stmt_tests {
             op::BinOp,
             token::{Keyword, Token},
         },
-        stmt::Assignment,
+        stmt::Declaration,
     };
 
     use super::Stmt;
@@ -94,7 +82,7 @@ mod stmt_tests {
         let tokens = vec![
             Token::Keyword(Keyword::Let),
             Token::Ident("coolVariable".to_owned()),
-            Token::AssignmentSign,
+            Token::DeclarationSign,
             Token::LeftBracket,
             Token::Int(1),
             Token::Op(BinOp::Add),
@@ -111,7 +99,7 @@ mod stmt_tests {
 
         assert_eq!(
             binding,
-            Stmt::Assignment(Assignment {
+            Stmt::Declaration(Declaration {
                 ident: "coolVariable".to_owned(),
                 val: Expr::Num(2)
             })
@@ -119,11 +107,11 @@ mod stmt_tests {
     }
 
     #[test]
-    fn successful_bool_assignment() {
+    fn successful_bool_Declaration() {
         let tokens = vec![
             Token::Keyword(Keyword::Let),
             Token::Ident("coolVariable".to_owned()),
-            Token::AssignmentSign,
+            Token::DeclarationSign,
             Token::LeftBracket,
             Token::Keyword(Keyword::True),
             Token::EqSign,
@@ -140,7 +128,7 @@ mod stmt_tests {
 
         assert_eq!(
             binding,
-            Stmt::Assignment(Assignment {
+            Stmt::Declaration(Declaration {
                 ident: "coolVariable".to_owned(),
                 val: Expr::Bool(false)
             })
@@ -152,7 +140,7 @@ mod stmt_tests {
         let tokens = vec![
             Token::Keyword(Keyword::Let),
             Token::Ident("coolVariable".to_owned()),
-            Token::AssignmentSign,
+            Token::DeclarationSign,
             Token::LeftBracket,
             Token::Int(1),
             Token::Op(BinOp::Add),
@@ -169,7 +157,7 @@ mod stmt_tests {
 
         assert_ne!(
             binding,
-            Stmt::Assignment(Assignment {
+            Stmt::Declaration(Declaration {
                 ident: "coolVariable".to_owned(),
                 val: Expr::Num(3)
             })

@@ -1,25 +1,57 @@
+mod env;
+mod err;
+
+use err::RuntimeErr;
 use std::io;
 
 use crate::{
+    expr::Expr,
     lexer::{Lexer, LexerError},
     parser::{error::ParserError, Parser},
     stmt::Stmt,
 };
 
+use self::env::Env;
+
 #[derive(Debug)]
 pub struct Interpreter {
     instructions: Vec<Stmt>,
+    env: Env,
 }
 
 impl Interpreter {
     pub fn new(instructions: Vec<Stmt>) -> Self {
-        Self { instructions }
+        Self {
+            instructions,
+            env: Env::new(),
+        }
     }
 
-    pub fn interpret(&self) {
-        self.instructions.iter().for_each(|stmt| {
-            stmt.execute();
-        });
+    /// Interprets the instructions, and consumes itself.
+    pub fn interpret(mut self) -> Result<(), Err> {
+        for stmt in self.instructions {
+            match stmt {
+                Stmt::Declaration(declaration) => {
+                    if let Err(err) = self.env.define(declaration.ident, declaration.val) {
+                        return Err(Err::RuntimeErr(err));
+                    }
+                }
+                Stmt::Print(expr) => {
+                    if let Expr::Var(ident) = &expr {
+                        let expr = self.env.get(ident)?;
+                        println!("{expr}");
+                    } else {
+                        println!("{}", expr.eval()?);
+                    }
+                }
+                Stmt::ExprStatement(expr) => {
+                    println!("{expr}");
+                    
+                }
+            }
+        }
+
+        Ok(())
     }
 
     pub fn repl() -> Result<(), Err> {
@@ -48,4 +80,6 @@ pub enum Err {
     ParserError(#[from] ParserError),
     #[error("An error occurred during lexing.")]
     LexerError(#[from] LexerError),
+    #[error("A runtime error has occured.")]
+    RuntimeErr(#[from] RuntimeErr),
 }

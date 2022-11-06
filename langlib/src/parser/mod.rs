@@ -24,13 +24,10 @@ impl Parser {
 
         let stmt = self.stmt()?;
 
-
         stmt_vec.push(stmt);
-        
+
         self.adv();
 
-        
-        
         while !self.is_at_end() {
             let stmt = self.stmt()?;
 
@@ -120,8 +117,12 @@ impl Parser {
     }
 
     /// Returns the previous token
-    fn prev(&self) -> Token {
-        self.tokens[self.cursor - 1].clone()
+    fn prev(&self) -> Result<Token, ParserError> {
+        if self.cursor == 0 {
+            return Err(ParserError::InvalidTokenIndex);
+        }
+
+        Ok(self.tokens[self.cursor - 1].clone())
     }
 
     /// Returns the current token
@@ -151,7 +152,7 @@ mod parser_tests {
     use crate::{
         expr::Expr,
         lexer::{token::Keyword, Lexer},
-        stmt::Assignment,
+        stmt::Declaration,
     };
 
     use super::*;
@@ -174,7 +175,7 @@ mod parser_tests {
 
         parser.adv();
 
-        assert_eq!(parser.prev(), Token::Keyword(Keyword::Let));
+        assert_eq!(parser.prev(), Ok(Token::Keyword(Keyword::Let)));
 
         (1..(parser.tokens.len() - 1)).for_each(|_| {
             parser.adv();
@@ -195,7 +196,7 @@ mod parser_tests {
         let rules = [
             Token::Keyword(Keyword::Let),
             Token::Ident("x".to_owned()),
-            Token::AssignmentSign,
+            Token::DeclarationSign,
             Token::Int(5),
             Token::Semi,
         ];
@@ -213,7 +214,7 @@ mod parser_tests {
         let rules = [
             Token::Keyword(Keyword::Let),
             Token::Ident("x".to_owned()),
-            Token::AssignmentSign,
+            Token::DeclarationSign,
             Token::Int(0),
             Token::Semi,
         ];
@@ -359,7 +360,7 @@ mod parser_tests {
 
         assert_eq!(
             binding_stmt,
-            Stmt::Assignment(Assignment {
+            Stmt::Declaration(Declaration {
                 ident: "x".to_owned(),
                 val: Expr::Bool(true)
             })
@@ -380,7 +381,7 @@ mod parser_tests {
 
         assert_eq!(
             binding_stmt,
-            Stmt::Assignment(Assignment {
+            Stmt::Declaration(Declaration {
                 ident: "x".to_owned(),
                 val: Expr::Bool(true)
             })
@@ -398,7 +399,7 @@ mod parser_tests {
         print 
         
         
-        \"This is a very cool string.\";";
+        \"This is a very cool string.\"; let undefinedVar;";
 
         let mut lexer = Lexer::new(s);
 
@@ -413,20 +414,24 @@ mod parser_tests {
         assert_eq!(
             statements,
             vec![
-                Stmt::Assignment(Assignment {
+                Stmt::Declaration(Declaration {
                     ident: "x".to_owned(),
                     val: Expr::Bool(true)
                 }),
                 Stmt::Print(Expr::Num(9)),
-                Stmt::Assignment(Assignment {
+                Stmt::Declaration(Declaration {
                     ident: "y".to_owned(),
                     val: Expr::Num(3)
                 }),
-                Stmt::Assignment(Assignment {
+                Stmt::Declaration(Declaration {
                     ident: "z".to_owned(),
                     val: Expr::Bool(false)
                 }),
-                Stmt::Print(Expr::Str("This is a very cool string.".to_owned()))
+                Stmt::Print(Expr::Str("This is a very cool string.".to_owned())),
+                Stmt::Declaration(Declaration {
+                    ident: "undefinedVar".to_owned(),
+                    val: Expr::Null
+                }),
             ]
         )
     }

@@ -11,15 +11,13 @@ impl Parser {
         let mut x: i32 = self.term()?.try_into()?;
 
         while !self.is_at_end() {
-
- let op = match self.matches(&[Token::Op(BinOp::Add), Token::Op(BinOp::Sub)]) {
+            let op = match self.matches(&[Token::Op(BinOp::Add), Token::Op(BinOp::Sub)]) {
                 Some(op) => op,
                 None => break,
             }
             .try_into_op()?;
 
             let other_term: i32 = self.term()?.try_into()?;
-            
 
             match op {
                 BinOp::Add => x += other_term,
@@ -75,7 +73,7 @@ impl Parser {
     /// Attempts to parse a number
     pub fn num(&mut self) -> Result<i32, ParserError> {
         if self.match_rule(&[Token::Int(0)]) {
-            return Ok(self.prev().try_into_int()?);
+            return Ok(self.prev()?.try_into_int()?);
         }
 
         Err(ParserError::Expected(Token::Int(0)))

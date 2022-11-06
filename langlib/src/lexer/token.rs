@@ -8,7 +8,7 @@ use super::op::{BinOp, UnOp};
 pub enum Token {
     Op(BinOp),
     UnOp(UnOp),
-    AssignmentSign,
+    DeclarationSign,
     EqSign,
     Int(i32),
     Semi,

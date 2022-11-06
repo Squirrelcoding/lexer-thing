@@ -1,6 +1,7 @@
 use crate::{
+    expr::Expr,
     lexer::token::{Keyword, Token},
-    stmt::{Assignment, Stmt},
+    stmt::{Declaration, Stmt},
 };
 
 use super::{error::ParserError, Parser};
@@ -28,39 +29,38 @@ impl Parser {
             Some(token) => match token {
                 // Match the keyword
                 Token::Keyword(keyword) => match keyword {
-                    // If it's an assignment statement
+                    // If it's an Declaration statement
                     Keyword::Let => {
                         // Then check if these things apply
                         if self.match_rule(&[
                             Token::Keyword(Keyword::Let),
                             Token::Ident("".to_owned()),
-                            Token::AssignmentSign,
                         ]) {
-                            // Get the identier and value
-                            let ident = self.at(self.cursor - 2)?.try_into_ident()?;
+                            if self.match_rule(&[Token::DeclarationSign]) {
+                                // Get the identier and value
+                                let ident = self.at(self.cursor - 2)?.try_into_ident()?;
 
+                                let expr = self.expr()?;
 
-                            let expr = self.expr()?;
+                                return Ok(Stmt::Declaration(Declaration { ident, val: expr }));
+                            }
 
-                            return Ok(Stmt::Assignment(Assignment { ident, val: expr }));
+                            let ident = self.prev()?.try_into_ident()?;
+
+                            // Set the variable to null by default;
+                            return Ok(Stmt::Declaration(Declaration {
+                                ident,
+                                val: Expr::Null,
+                            }));
                         }
 
                         // Reset position
                         self.cursor = curr;
-                        Err(ParserError::BadStatement)
+                        Err(ParserError::Expected(Token::Keyword(Keyword::Let)))
                     }
                     Keyword::Print => {
                         if self.match_rule(&[Token::Keyword(Keyword::Print)]) {
-                            // if let Token::String(string) = self.curr() {
-
-                            //     // weird edge case thingy
-                            //     self.adv();
-
-                            //     return Ok(Stmt::Print(Expr::Str(string)));
-                            // }
-
                             let expr = self.expr()?;
-                            // self.adv();
 
                             return Ok(Stmt::Print(expr));
                         }
@@ -69,9 +69,12 @@ impl Parser {
                         Err(ParserError::BadStatement)
                     }
 
-                    // Reset position
                     _ => Err(ParserError::BadStatement),
                 },
+
+                Token::Ident(ident) => {
+                    return Ok(Stmt::ExprStatement(Expr::Var(ident.to_owned())));
+                }
 
                 // Reset position
                 _ => Err(ParserError::BadStatement),
@@ -82,8 +85,8 @@ impl Parser {
         }
     }
 
-    /// Attempts to match an assignment
-    pub fn assignment(&mut self) -> Result<Stmt, ParserError> {
+    /// Attempts to match an Declaration
+    pub fn Declaration(&mut self) -> Result<Stmt, ParserError> {
         // Check if it starts with a `let` keyword
         if !self.match_rule(&[Token::Keyword(Keyword::Let)]) {
             return Err(ParserError::Expected(Token::Keyword(Keyword::Let)));
@@ -96,12 +99,12 @@ impl Parser {
         self.adv();
 
         // Check if there follows an equals sign
-        if !self.match_rule(&[Token::AssignmentSign]) {
-            return Err(ParserError::Expected(Token::AssignmentSign));
+        if !self.match_rule(&[Token::DeclarationSign]) {
+            return Err(ParserError::Expected(Token::DeclarationSign));
         }
 
         let expr = self.expr()?;
 
-        Ok(Stmt::Assignment(Assignment { ident, val: expr }))
+        Ok(Stmt::Declaration(Declaration { ident, val: expr }))
     }
 }
