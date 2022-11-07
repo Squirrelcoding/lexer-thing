@@ -1,27 +1,21 @@
 use langlib::{
-    interpreter::{Err, Interpreter},
+    interpreter::{Err},
     lexer::Lexer,
     parser::Parser,
 };
 
 fn main() -> Result<(), Err> {
-    let x = "
+    let s = "let x = !(true == false);";
 
-    let a = true;
-    let b = false;
-    print a == b;
-    ";
+    let mut lexer = Lexer::new(s);
 
-    let tokens = Lexer::new(x).tokenize()?;
+    let binding_stmt = Parser::new(lexer.tokenize().unwrap()).stmt();
 
-    let mut parser = Parser::new(tokens);
+    assert!(binding_stmt.is_ok());
 
-    let statements = parser.get_statements()?;
+    let binding_stmt = binding_stmt.unwrap();
 
-
-    let mut interpreter = Interpreter::new(statements);
-
-    interpreter.interpret()?;
+    println!("{binding_stmt:?}");
 
     Ok(())
 }

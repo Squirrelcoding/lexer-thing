@@ -15,6 +15,7 @@ print (a + b) * 23;
 
 ## Currently working on
 - Statements and stuff
+- Adding support for comparisions other than `==`
 
 ## Features
 - Basic unary expressions
@@ -23,5 +24,4 @@ print (a + b) * 23;
 - Basic variables
 
 ## TODO
-- Add support for comparisions other than `==`
 - Get rid of so many `.clone()`s in the code, make it more efficient.

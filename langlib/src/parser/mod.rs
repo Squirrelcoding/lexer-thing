@@ -150,8 +150,8 @@ mod parser_tests {
 
     use super::super::lexer::op::BinOp;
     use crate::{
-        expr::Expr,
-        lexer::{token::Keyword, Lexer},
+        expr::{BinExpr, Expr},
+        lexer::{op::UnOp, token::Keyword, Lexer},
         stmt::Declaration,
     };
 
@@ -259,6 +259,7 @@ mod parser_tests {
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
         let result = parser.compare();
+
         assert!(result.is_ok());
 
         let result = result.unwrap().eval();
@@ -362,7 +363,14 @@ mod parser_tests {
             binding_stmt,
             Stmt::Declaration(Declaration {
                 ident: "x".to_owned(),
-                val: Expr::Bool(true)
+                val: Expr::Unary(
+                    UnOp::Bang,
+                    Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Bool(true)),
+                        rhs: Box::new(Expr::Bool(false)),
+                        op: BinOp::EqSign
+                    }))
+                )
             })
         );
     }
@@ -383,7 +391,14 @@ mod parser_tests {
             binding_stmt,
             Stmt::Declaration(Declaration {
                 ident: "x".to_owned(),
-                val: Expr::Bool(true)
+                val: Expr::Unary(
+                    UnOp::Bang,
+                    Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Str("this is a string.".to_owned())),
+                        rhs: Box::new(Expr::Str("this is another string.".to_owned())),
+                        op: BinOp::EqSign
+                    }))
+                )
             })
         );
     }
@@ -416,22 +431,45 @@ mod parser_tests {
             vec![
                 Stmt::Declaration(Declaration {
                     ident: "x".to_owned(),
-                    val: Expr::Bool(true)
+                    val: Expr::Unary(
+                        UnOp::Bang,
+                        Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Str("this is a string.".to_owned())),
+                            rhs: Box::new(Expr::Str("this is another string.".to_owned())),
+                            op: BinOp::EqSign
+                        }))
+                    )
                 }),
-                Stmt::Print(Expr::Num(9)),
+                Stmt::Print(Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Num(23)),
+                        rhs: Box::new(Expr::Num(5)),
+                        op: BinOp::Sub
+                    })),
+                    rhs: Box::new(Expr::Num(2)),
+                    op: BinOp::Div
+                })),
                 Stmt::Declaration(Declaration {
                     ident: "y".to_owned(),
-                    val: Expr::Num(3)
+                    val: Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Num(2)),
+                            rhs: Box::new(Expr::Num(4)),
+                            op: BinOp::Add
+                        })),
+                        rhs: Box::new(Expr::Num(2)),
+                        op: BinOp::Div
+                    })
                 }),
                 Stmt::Declaration(Declaration {
                     ident: "z".to_owned(),
-                    val: Expr::Bool(false)
+                    val: Expr::Unary(UnOp::Bang, Box::new(Expr::Bool(true)))
                 }),
                 Stmt::Print(Expr::Str("This is a very cool string.".to_owned())),
                 Stmt::Declaration(Declaration {
                     ident: "undefinedVar".to_owned(),
                     val: Expr::Null
-                }),
+                })
             ]
         )
     }

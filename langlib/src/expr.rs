@@ -92,8 +92,10 @@ impl BinExpr {
 
     fn try_into_nums(&self) -> Result<(i32, i32), ParserError> {
 
-        let lhs: i32 = (*self.lhs.clone()).try_into()?;
-        let rhs: i32 = (*self.rhs.clone()).try_into()?;
+        let lhs: i32 = (*self.lhs.clone()).eval()?.try_into()?;
+
+
+        let rhs: i32 = (*self.rhs.clone()).eval()?.try_into()?;
 
 
         Ok((lhs, rhs))
@@ -126,12 +128,7 @@ impl BinExpr {
             },
             BinOp::EqSign => {
 
-                Ok(Expr::Bool(match (self.lhs.as_ref(), self.rhs.as_ref()) {
-                    (Expr::Num(a), Expr::Num(b)) => a == b,
-                    (Expr::Str(a), Expr::Str(b)) => a == b,
-                    (Expr::Bool(a), Expr::Bool(b)) => a == b,
-                    _ => return Err(ParserError::ExprError(ExprError::InvalidComparision))
-                }))
+                Ok(Expr::Bool(self.lhs.eval()? == self.rhs.eval()?))
 
             },
         }

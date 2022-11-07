@@ -1,0 +1,20 @@
+Bin(
+    BinExpr {
+        lhs: Bin(
+            BinExpr { 
+                lhs: Bin(
+                    BinExpr { 
+                        lhs: Num(3), 
+                        rhs: Num(15), 
+                        op: Add 
+                    }
+                ), 
+                rhs: Num(2), 
+                op: Div 
+            }
+        ), 
+        rhs: 
+        Num(20), 
+        op: EqSign 
+    }
+)

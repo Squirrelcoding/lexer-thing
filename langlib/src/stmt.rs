@@ -67,7 +67,7 @@ pub struct Declaration {
 #[cfg(test)]
 mod stmt_tests {
     use crate::{
-        expr::Expr,
+        expr::{Expr, BinExpr},
         lexer::{
             op::BinOp,
             token::{Keyword, Token},
@@ -101,7 +101,7 @@ mod stmt_tests {
             binding,
             Stmt::Declaration(Declaration {
                 ident: "coolVariable".to_owned(),
-                val: Expr::Num(2)
+                val: Expr::Bin(BinExpr { lhs: Box::new(Expr::Num(1)), rhs: Box::new(Expr::Num(1)), op: BinOp::Add })
             })
         )
     }
@@ -130,7 +130,7 @@ mod stmt_tests {
             binding,
             Stmt::Declaration(Declaration {
                 ident: "coolVariable".to_owned(),
-                val: Expr::Bool(false)
+                val: Expr::Bin(BinExpr { lhs: Box::new(Expr::Bool(true)), rhs: Box::new(Expr::Bool(false)), op: BinOp::EqSign })
             })
         )
     }
