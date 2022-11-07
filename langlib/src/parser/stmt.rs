@@ -60,8 +60,8 @@ impl Parser {
                     }
                     Keyword::Print => {
                         if self.match_rule(&[Token::Keyword(Keyword::Print)]) {
-                            let expr = self.expr()?;
 
+                            let expr = self.expr()?;
                             return Ok(Stmt::Print(expr));
                         }
 
@@ -72,12 +72,17 @@ impl Parser {
                     _ => Err(ParserError::BadStatement),
                 },
 
-                Token::Ident(ident) => {
-                    return Ok(Stmt::ExprStatement(Expr::Var(ident.to_owned())));
-                }
-
                 // Reset position
-                _ => Err(ParserError::BadStatement),
+                _ => match token {
+                    Token::Int(int) => return Ok(Stmt::ExprStatement(Expr::Num(*int))),
+                    Token::String(string) => {
+                        return Ok(Stmt::ExprStatement(Expr::Str(string.to_owned())))
+                    }
+                    Token::Ident(ident) => {
+                        return Ok(Stmt::ExprStatement(Expr::Var(ident.to_owned())));
+                    }
+                    _ => return Err(ParserError::BadStatement),
+                },
             },
 
             // Reset position
@@ -86,7 +91,7 @@ impl Parser {
     }
 
     /// Attempts to match an Declaration
-    pub fn Declaration(&mut self) -> Result<Stmt, ParserError> {
+    pub fn declaration(&mut self) -> Result<Stmt, ParserError> {
         // Check if it starts with a `let` keyword
         if !self.match_rule(&[Token::Keyword(Keyword::Let)]) {
             return Err(ParserError::Expected(Token::Keyword(Keyword::Let)));

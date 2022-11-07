@@ -1,5 +1,3 @@
-use colored::Colorize;
-
 use crate::{
     expr::{BinExpr, Expr},
     lexer::{

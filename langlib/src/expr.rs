@@ -78,9 +78,9 @@ impl TryInto<bool> for Expr {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BinExpr {
-    lhs: Box<Expr>,
-    rhs: Box<Expr>,
-    op: BinOp,
+    pub lhs: Box<Expr>,
+    pub rhs: Box<Expr>,
+    pub op: BinOp,
 }
 
 impl BinExpr {

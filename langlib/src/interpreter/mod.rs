@@ -2,10 +2,10 @@ mod env;
 mod err;
 
 use err::RuntimeErr;
-use std::io;
+use std::{cell::RefCell, io};
 
 use crate::{
-    expr::Expr,
+    expr::{BinExpr, Expr},
     lexer::{Lexer, LexerError},
     parser::{error::ParserError, Parser},
     stmt::Stmt,
@@ -27,26 +27,57 @@ impl Interpreter {
         }
     }
 
-    /// Interprets the instructions, and consumes itself.
-    pub fn interpret(mut self) -> Result<(), Err> {
-        for stmt in self.instructions {
+    /// Visits an expression and executes it.
+    fn visit_expr(&self, expr: Expr) -> Result<Expr, Err> {
+        match expr {
+            Expr::Var(var) => match self.env.get(&var) {
+                Ok(val) => Ok(val.clone()),
+                Err(err) => Err(Err::RuntimeErr(err)),
+            },
+            Expr::Bin(bin_expr) => {
+                let lhs = self.visit_expr(bin_expr.lhs.as_ref().clone())?;
+                let rhs = self.visit_expr(bin_expr.rhs.as_ref().clone())?;
+
+                match Expr::eval(&Expr::Bin(BinExpr {
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                    op: bin_expr.op,
+                })) {
+                    Ok(result) => Ok(result),
+                    Err(err) => Err(Err::ParserError(err)),
+                }
+            }
+            Expr::Unary(op, expr) => match self.visit_expr(Expr::Unary(op, expr)) {
+                Ok(val) => Ok(val),
+                Err(err) => Err(err),
+            },
+            _ => Ok(expr),
+        }
+    }
+
+    /// Interprets the instructions
+    pub fn interpret(&mut self) -> Result<(), Err> {
+        for stmt in self.instructions.iter() {
             match stmt {
                 Stmt::Declaration(declaration) => {
-                    if let Err(err) = self.env.define(declaration.ident, declaration.val) {
+                    if let Err(err) = self
+                        .env
+                        .define(declaration.ident.clone(), declaration.val.clone())
+                    {
                         return Err(Err::RuntimeErr(err));
                     }
                 }
-                Stmt::Print(expr) => {
-                    if let Expr::Var(ident) = &expr {
-                        let expr = self.env.get(ident)?;
-                        println!("{expr}");
-                    } else {
-                        println!("{}", expr.eval()?);
-                    }
+
+                Stmt::Print(exprr) => {
+
+                    println!("EXPR: {exprr:?}");
+
+                    let result = self.visit_expr(exprr.clone())?;
+
+                    println!("{}", result);
                 }
                 Stmt::ExprStatement(expr) => {
                     println!("{expr}");
-                    
                 }
             }
         }

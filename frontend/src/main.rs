@@ -7,18 +7,21 @@ use langlib::{
 fn main() -> Result<(), Err> {
     let x = "
 
-    3;
+    let a = 1;
+
+    let b = 2;
+
+    print a + b;
 
     ";
 
     let tokens = Lexer::new(x).tokenize()?;
 
-
     let mut parser = Parser::new(tokens);
 
     let statements = parser.get_statements()?;
 
-    let interpreter = Interpreter::new(statements);
+    let mut interpreter = Interpreter::new(statements);
 
     interpreter.interpret()?;
 
