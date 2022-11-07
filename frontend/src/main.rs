@@ -1,21 +1,29 @@
 use langlib::{
-    interpreter::{Err},
+    interpreter::{Err, Interpreter},
     lexer::Lexer,
     parser::Parser,
 };
 
 fn main() -> Result<(), Err> {
-    let s = "let x = !(true == false);";
+    // let s = "let x = !(\"this is a string.\" == \"this is another string.\"); 
+    // print (23-5)/ 2; 
+    // let y = (2 + 4) / 2; 
+    // let z = !true;    
+
+    // print \"This is a very cool string.\"; 
+    // let undefinedVar;";
+
+    let s = "(false) == true;";
 
     let mut lexer = Lexer::new(s);
 
-    let binding_stmt = Parser::new(lexer.tokenize().unwrap()).stmt();
+    let mut parser = Parser::new(lexer.tokenize()?);
 
-    assert!(binding_stmt.is_ok());
+    let stmts = parser.get_statements()?;
 
-    let binding_stmt = binding_stmt.unwrap();
+    let mut interpreter = Interpreter::new(stmts);
 
-    println!("{binding_stmt:?}");
+    interpreter.interpret()?;
 
     Ok(())
 }
