@@ -52,7 +52,7 @@ impl Interpreter {
                     Ok(result) => Ok(result),
                     Err(err) => Err(Err::ParserError(err)),
                 }
-            }
+            },
             Expr::Unary(op, expr) => match self.visit_expr(Expr::Unary(op, expr)) {
                 Ok(val) => Ok(val),
                 Err(err) => Err(err),

@@ -2,7 +2,7 @@ use std::{fmt::Display, mem};
 
 use colored::Colorize;
 
-use crate::{lexer::{op::UnOp, token::Token}, parser::error::ParserError};
+use crate::{lexer::{op::UnOp}, parser::error::ParserError};
 
 use super::lexer::op::BinOp;
 
@@ -14,7 +14,6 @@ pub enum Expr {
     Var(String),
     Bool(bool),
     Bin(BinExpr),
-    Grouping(Box<Expr>),
     Unary(UnOp, Box<Expr>),
     Null,
 }
@@ -107,7 +106,7 @@ impl BinExpr {
         match self.op {
             BinOp::Add => {
                 let (lhs, rhs) = self.try_into_nums()?;
-                
+
                 Ok(Expr::Num(lhs + rhs))
             },
             BinOp::Sub => {

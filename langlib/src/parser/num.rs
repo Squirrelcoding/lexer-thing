@@ -73,7 +73,7 @@ impl Parser {
                 return Err(ParserError::Expected(Token::RightBracket));
             }
 
-            return Ok(Expr::Grouping(Box::new(result)));
+            return Ok(result);
         }
 
         Ok(self.num_var()?)

@@ -6,14 +6,10 @@ use langlib::{
 
 fn main() -> Result<(), Err> {
     let x = "
-    let x = 271828;
-    let y = 314159;
-    
-    print \"Hello, world!\";
-    print true == false;
-    
-    print x - y;
 
+    let a = true;
+    let b = false;
+    print a == b;
     ";
 
     let tokens = Lexer::new(x).tokenize()?;
@@ -21,6 +17,7 @@ fn main() -> Result<(), Err> {
     let mut parser = Parser::new(tokens);
 
     let statements = parser.get_statements()?;
+
 
     let mut interpreter = Interpreter::new(statements);
 
