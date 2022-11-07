@@ -2,7 +2,7 @@ use std::{fmt::Display, mem};
 
 use colored::Colorize;
 
-use crate::{lexer::op::UnOp, parser::error::ParserError};
+use crate::{lexer::{op::UnOp, token::Token}, parser::error::ParserError};
 
 use super::lexer::op::BinOp;
 
@@ -14,6 +14,7 @@ pub enum Expr {
     Var(String),
     Bool(bool),
     Bin(BinExpr),
+    Grouping(Box<Expr>),
     Unary(UnOp, Box<Expr>),
     Null,
 }
@@ -21,7 +22,9 @@ pub enum Expr {
 impl Expr {
     pub fn eval(&self) -> Result<Expr, ParserError> {
         match self {
-            Expr::Bin(expr) => expr.eval(),
+            Expr::Bin(expr) => {
+                expr.clone().eval()
+            },
 
             Expr::Unary(op, expr) => {
                 if mem::discriminant(&Expr::Bool(false)) != mem::discriminant(&expr.eval()?) {
@@ -88,14 +91,59 @@ impl BinExpr {
         Self { lhs, rhs, op }
     }
 
-    pub fn eval(&self) -> Result<Expr, ParserError> {
-        match (self.lhs.as_ref(), self.rhs.as_ref()) {
-            (Expr::Num(a), Expr::Num(b)) => Ok(Expr::Bool(a == b)),
-            (Expr::Str(a), Expr::Str(b)) => Ok(Expr::Bool(a == b)),
-            (Expr::Bool(a), Expr::Bool(b)) => Ok(Expr::Bool(a == b)),
-            (Expr::Bin(a), Expr::Bin(b)) => Ok(Expr::Bool(a.eval()? == b.eval()?)),
-            _ => Err(ParserError::ExprError(ExprError::FailedBinEvaluation)),
+    fn try_into_nums(&self) -> Result<(i32, i32), ParserError> {
+
+        let lhs: i32 = (*self.lhs.clone()).try_into()?;
+        let rhs: i32 = (*self.rhs.clone()).try_into()?;
+
+
+        Ok((lhs, rhs))
+    }
+
+    /// Evaluates the expression, and consumes itself.
+    pub fn eval(self) -> Result<Expr, ParserError> {
+
+
+        match self.op {
+            BinOp::Add => {
+                let (lhs, rhs) = self.try_into_nums()?;
+                
+                Ok(Expr::Num(lhs + rhs))
+            },
+            BinOp::Sub => {
+                let (lhs, rhs) = self.try_into_nums()?;
+
+                Ok(Expr::Num(lhs - rhs))
+            },
+            BinOp::Mul => {
+                let (lhs, rhs) = self.try_into_nums()?;
+
+                Ok(Expr::Num(lhs * rhs))
+            },
+            BinOp::Div => {
+                let (lhs, rhs) = self.try_into_nums()?;
+
+                Ok(Expr::Num(lhs / rhs))
+            },
+            BinOp::EqSign => {
+
+                Ok(Expr::Bool(match (self.lhs.as_ref(), self.rhs.as_ref()) {
+                    (Expr::Num(a), Expr::Num(b)) => a == b,
+                    (Expr::Str(a), Expr::Str(b)) => a == b,
+                    (Expr::Bool(a), Expr::Bool(b)) => a == b,
+                    _ => return Err(ParserError::ExprError(ExprError::InvalidComparision))
+                }))
+
+            },
         }
+
+        // match (self.lhs.as_ref(), self.rhs.as_ref()) {
+        //     (Expr::Num(a), Expr::Num(b)) => Ok(Expr::Bool(a == b)),
+        //     (Expr::Str(a), Expr::Str(b)) => Ok(Expr::Bool(a == b)),
+        //     (Expr::Bool(a), Expr::Bool(b)) => Ok(Expr::Bool(a == b)),
+        //     (Expr::Bin(a), Expr::Bin(b)) => Ok(Expr::Bool(a.eval()? == b.eval()?)),
+        //     _ => Err(ParserError::ExprError(ExprError::FailedBinEvaluation)),
+        // }
     }
 }
 
@@ -109,4 +157,7 @@ pub enum ExprError {
 
     #[error("The parser failed to evaluate a unary expression")]
     InvalidUnaryOperation,
+
+    #[error("The parser failed to compare two values.")]
+    InvalidComparision,
 }

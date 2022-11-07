@@ -34,7 +34,7 @@ impl Stmt {
                         return Err(ParserError::Expected(Token::DeclarationSign));
                     }
 
-                    let expr = Parser::new(tokens[3..].to_vec()).expr()?.eval()?;
+                    let expr = Parser::new(tokens[3..].to_vec()).expr()?;
 
                     Ok(Self::Declaration(Declaration { ident, val: expr }))
                 }
@@ -107,7 +107,7 @@ mod stmt_tests {
     }
 
     #[test]
-    fn successful_bool_Declaration() {
+    fn successful_bool_declaration() {
         let tokens = vec![
             Token::Keyword(Keyword::Let),
             Token::Ident("coolVariable".to_owned()),

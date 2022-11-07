@@ -31,12 +31,18 @@ impl Interpreter {
     fn visit_expr(&self, expr: Expr) -> Result<Expr, Err> {
         match expr {
             Expr::Var(var) => match self.env.get(&var) {
-                Ok(val) => Ok(val.clone()),
+                Ok(val) => {
+                    Ok(val.clone())
+                },
                 Err(err) => Err(Err::RuntimeErr(err)),
             },
             Expr::Bin(bin_expr) => {
+
+
                 let lhs = self.visit_expr(bin_expr.lhs.as_ref().clone())?;
+                
                 let rhs = self.visit_expr(bin_expr.rhs.as_ref().clone())?;
+
 
                 match Expr::eval(&Expr::Bin(BinExpr {
                     lhs: Box::new(lhs),
@@ -69,8 +75,6 @@ impl Interpreter {
                 }
 
                 Stmt::Print(exprr) => {
-
-                    println!("EXPR: {exprr:?}");
 
                     let result = self.visit_expr(exprr.clone())?;
 

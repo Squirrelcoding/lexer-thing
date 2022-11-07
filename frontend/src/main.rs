@@ -6,12 +6,13 @@ use langlib::{
 
 fn main() -> Result<(), Err> {
     let x = "
-
-    let a = 1;
-
-    let b = 2;
-
-    print a + b;
+    let x = 271828;
+    let y = 314159;
+    
+    print \"Hello, world!\";
+    print true == false;
+    
+    print x - y;
 
     ";
 

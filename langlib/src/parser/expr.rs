@@ -11,7 +11,7 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse an expression
     pub fn expr(&mut self) -> Result<Expr, ParserError> {
-        self.un_expr()?.eval()
+        self.un_expr()
     }
 
     /// Attempts to parse a string token, and advances if successful.
@@ -27,13 +27,13 @@ impl Parser {
                 return Ok(Expr::Unary(token.try_into_un_op()?, Box::new(expr)));
             }
 
-            let expr = self.expr()?.eval()?;
+            let expr = self.expr()?;
 
             return Ok(Expr::Unary(token.try_into_un_op()?, Box::new(expr)));
         }
 
         match self.compare() {
-            Ok(expr) => expr.eval(),
+            Ok(expr) => Ok(expr),
             Err(err) => Err(err),
         }
     }

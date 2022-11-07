@@ -1,5 +1,5 @@
 use crate::{
-    expr::Expr,
+    expr::{Expr, BinExpr},
     lexer::{op::BinOp, token::Token},
 };
 
@@ -8,7 +8,7 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse an arithmetic expression
     pub fn num_expr(&mut self) -> Result<Expr, ParserError> {
-        let mut x: i32 = self.term()?.try_into()?;
+        let lhs = self.term()?;
 
         while !self.is_at_end() {
             let op = match self.matches(&[Token::Op(BinOp::Add), Token::Op(BinOp::Sub)]) {
@@ -17,25 +17,29 @@ impl Parser {
             }
             .try_into_op()?;
 
-            let other_term: i32 = self.term()?.try_into()?;
+            let rhs = self.term()?;
 
-            match op {
-                BinOp::Add => x += other_term,
-                BinOp::Sub => x -= other_term,
-                _ => return Err(ParserError::Expected(Token::Op(BinOp::Add))),
-            }
+            return match op {
+                BinOp::Add | BinOp::Sub => {
+                    Ok(Expr::Bin(BinExpr {
+                        lhs: Box::new(lhs),
+                        rhs: Box::new(rhs),
+                        op,
+                    }))
+                }
+                _ => panic!(),
+            };
         }
 
-        Ok(Expr::Num(x))
+        Ok(lhs)
     }
 
     /// Attempts to parse a term
     pub fn term(&mut self) -> Result<Expr, ParserError> {
-        // a will be a factor
-        let mut a: i32 = self.factor()?.try_into()?;
+        // lhs will be a factor
+        let lhs = self.factor()?;
 
-        // Get the operator given the allowed tokens
-
+        // Get the operator, which can either be a * or a /.
         while !self.is_at_end() {
             let op = match self.matches(&[Token::Op(BinOp::Mul), Token::Op(BinOp::Div)]) {
                 Some(op) => op,
@@ -43,19 +47,24 @@ impl Parser {
             }
             .try_into_op()?;
 
-            let b: i32 = self.factor()?.try_into()?;
+            let rhs = self.factor()?;
 
-            match op {
-                BinOp::Mul => a *= b,
-                BinOp::Div => a /= b,
+            return match op {
+                BinOp::Mul | BinOp::Div => {
+                    Ok(Expr::Bin(BinExpr {
+                        lhs: Box::new(lhs),
+                        rhs: Box::new(rhs),
+                        op,
+                    }))
+                }
                 _ => panic!(),
-            }
+            };
         }
 
-        Ok(Expr::Num(a))
+        Ok(lhs)
     }
 
-    /// Attempts to parse a factor
+    /// Attempts to parse a factor, returns a `Grouping` or a literal that can either be a number or an identifier.
     pub fn factor(&mut self) -> Result<Expr, ParserError> {
         if self.matches(&[Token::LeftBracket]).is_some() {
             let result = self.num_expr()?;
@@ -64,18 +73,24 @@ impl Parser {
                 return Err(ParserError::Expected(Token::RightBracket));
             }
 
-            return Ok(result);
+            return Ok(Expr::Grouping(Box::new(result)));
         }
 
-        Ok(Expr::Num(self.num()?))
+        Ok(self.num_var()?)
     }
 
-    /// Attempts to parse a number
-    pub fn num(&mut self) -> Result<i32, ParserError> {
-        if self.match_rule(&[Token::Int(0)]) {
-            return Ok(self.prev()?.try_into_int()?);
-        }
+    /// Attempts to parse a number / identifier.
+    pub fn num_var(&mut self) -> Result<Expr, ParserError> {
 
-        Err(ParserError::Expected(Token::Int(0)))
+        let result = match self.curr() {
+            Token::Int(int) => Expr::Num(int),
+            Token::Ident(ident) => Expr::Var(ident),
+            _ => return Err(ParserError::Expected(Token::Int(0)))
+        };
+
+        // Increment the cursor
+        self.adv();
+
+        Ok(result)
     }
 }
