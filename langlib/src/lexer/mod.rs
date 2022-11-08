@@ -69,7 +69,7 @@ impl<'a> Lexer<'a> {
             '/' => Ok((Token::Op(BinOp::Div), 1)),
             '=' => {
                 if Some('=') == data.chars().nth(1) {
-                    return Ok((Token::EqSign, 2));
+                    return Ok((Token::Op(BinOp::EqSign), 2));
                 }
                 Ok((Token::DeclarationSign, 1))
             }

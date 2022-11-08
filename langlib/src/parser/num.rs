@@ -77,10 +77,10 @@ impl Parser {
 
     /// Attempts to parse a number / identifier.
     pub fn num_var(&mut self) -> Result<Expr, ParserError> {
-        let result = match self.curr() {
+        let result = match self.curr()? {
             Token::Int(int) => Expr::Num(int),
             Token::Ident(ident) => Expr::Var(ident),
-            _ => return Err(ParserError::Expected(Token::Int(0))),
+            tok => return Err(ParserError::UnexpectedToken(tok)),
         };
 
         // Increment the cursor

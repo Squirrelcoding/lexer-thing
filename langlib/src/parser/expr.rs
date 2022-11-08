@@ -43,7 +43,7 @@ impl Parser {
 
     /// Attempts to parse a string token, and advances if successful.
     pub fn str_expr(&mut self) -> Result<Expr, ParserError> {
-        if let Token::String(string) = self.curr() {
+        if let Token::String(string) = self.curr()? {
             self.adv();
             return Ok(Expr::Str(string));
         }
@@ -53,7 +53,7 @@ impl Parser {
 
     /// Attempts to parse a variable token, and advances if successful.
     pub fn var_expr(&mut self) -> Result<Expr, ParserError> {
-        if let Token::Ident(string) = self.curr() {
+        if let Token::Ident(string) = self.curr()? {
             self.adv();
             return Ok(Expr::Var(string));
         }

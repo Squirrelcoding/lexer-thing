@@ -1,3 +1,4 @@
+mod e;
 pub mod error;
 mod expr;
 mod num;
@@ -125,9 +126,16 @@ impl Parser {
         Ok(self.tokens[self.cursor - 1].clone())
     }
 
-    /// Returns the current token
-    fn curr(&self) -> Token {
-        self.tokens[self.cursor].clone()
+    /// Returns the current token, if there is one.
+    fn curr(&self) -> Result<Token, ParserError> {
+        if self.tokens.len() == 1 {
+            return Ok(self.tokens[0].to_owned());
+        }
+
+        if self.is_at_end() {
+            return Err(ParserError::UnexpectedEOF);
+        }
+        Ok(self.tokens[self.cursor].to_owned())
     }
 
     /// Returns the token at the given index `i`
@@ -141,7 +149,11 @@ impl Parser {
 
     /// Returns a boolean indicating whether the position is at the end of the token stream.
     pub fn is_at_end(&self) -> bool {
-        self.cursor + 1 >= self.tokens.len()
+        // We're always going to be at the end in this case.
+        if self.tokens.len() == 1 {
+            return true;
+        }
+        self.cursor >= self.tokens.len()
     }
 }
 
@@ -171,7 +183,7 @@ mod parser_tests {
         let fourth = fourth.unwrap();
 
         assert_eq!(fourth, Token::Int(1));
-        assert_eq!(parser.curr(), Token::Keyword(Keyword::Let));
+        assert_eq!(parser.curr(), Ok(Token::Keyword(Keyword::Let)));
 
         parser.adv();
 

@@ -1,21 +1,9 @@
-use langlib::{
-    interpreter::{Err, Interpreter},
-    lexer::Lexer,
-    parser::Parser,
-};
+use langlib::{interpreter::Err, lexer::Lexer, parser::Parser};
 
 fn main() -> Result<(), Err> {
-    // let s = "let x = !(\"this is a string.\" == \"this is another string.\"); 
-    // print (23-5)/ 2; 
-    // let y = (2 + 4) / 2; 
-    // let z = !true;    
+    let s = "1 + 2 * 5";
 
-    // print \"This is a very cool string.\"; 
-    // let undefinedVar;";
-
-    let s = "(false) == true;";
-
-    let mut lexer = Lexer::new(s);
+    let tokens = Lexer::new(s).tokenize()?;
 
     let mut parser = Parser::new(lexer.tokenize()?);
 
@@ -24,6 +12,11 @@ fn main() -> Result<(), Err> {
     let mut interpreter = Interpreter::new(stmts);
 
     interpreter.interpret()?;
+    println!("{tokens:?}");
+
+    let mut parser = Parser::new(tokens);
+
+    println!("{}", parser.term_e()?);
 
     Ok(())
 }

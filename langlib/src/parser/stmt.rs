@@ -91,7 +91,7 @@ impl Parser {
         }
 
         // Identifier
-        let ident = self.curr().try_into_ident()?;
+        let ident = self.curr()?.try_into_ident()?;
 
         // Advance because we didn't advance for the identifier
         self.adv();
