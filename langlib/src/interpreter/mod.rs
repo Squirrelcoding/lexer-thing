@@ -31,13 +31,13 @@ impl Interpreter {
     fn visit_expr(&self, expr: Expr) -> Result<Expr, Err> {
         match expr {
             Expr::Var(var) => match self.env.get(&var) {
-                Ok(val) => Ok(val.clone()),
+                Ok(val) => Ok(val.to_owned()),
                 Err(err) => Err(Err::RuntimeErr(err)),
             },
             Expr::Bin(bin_expr) => {
-                let lhs = self.visit_expr(bin_expr.lhs.as_ref().clone())?;
+                let lhs = self.visit_expr(bin_expr.lhs.as_ref().to_owned())?;
 
-                let rhs = self.visit_expr(bin_expr.rhs.as_ref().clone())?;
+                let rhs = self.visit_expr(bin_expr.rhs.as_ref().to_owned())?;
 
                 match Expr::eval(&Expr::Bin(BinExpr {
                     lhs: Box::new(lhs),
@@ -48,9 +48,9 @@ impl Interpreter {
                     Err(err) => Err(Err::ParserError(err)),
                 }
             }
-            Expr::Unary(op, expr) => match self.visit_expr(Expr::Unary(op, expr)) {
+            Expr::Unary(op, expr) => match Expr::eval(&Expr::Unary(op, expr)) {
                 Ok(val) => Ok(val),
-                Err(err) => Err(err),
+                Err(err) => Err(Err::ParserError(err)),
             },
             _ => Ok(expr),
         }
@@ -63,14 +63,14 @@ impl Interpreter {
                 Stmt::Declaration(declaration) => {
                     if let Err(err) = self
                         .env
-                        .define(declaration.ident.clone(), declaration.val.clone())
+                        .define(declaration.ident.to_owned(), declaration.val.to_owned())
                     {
                         return Err(Err::RuntimeErr(err));
                     }
                 }
 
                 Stmt::Print(exprr) => {
-                    let result = self.visit_expr(exprr.clone())?.eval()?;
+                    let result = self.visit_expr(exprr.to_owned())?.eval()?;
 
                     println!("{}", result);
                 }

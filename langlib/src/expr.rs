@@ -21,7 +21,7 @@ pub enum Expr {
 impl Expr {
     pub fn eval(&self) -> Result<Expr, ParserError> {
         match self {
-            Expr::Bin(expr) => expr.clone().eval(),
+            Expr::Bin(expr) => expr.to_owned().eval(),
 
             Expr::Unary(op, expr) => {
                 if mem::discriminant(&Expr::Bool(false)) != mem::discriminant(&expr.eval()?) {
@@ -36,7 +36,7 @@ impl Expr {
 
                 Ok(Expr::Bool(!result))
             }
-            _ => Ok(self.clone()),
+            _ => Ok(self.to_owned()),
         }
     }
 }
@@ -89,9 +89,9 @@ impl BinExpr {
     }
 
     fn try_into_nums(&self) -> Result<(i32, i32), ParserError> {
-        let lhs: i32 = (*self.lhs.clone()).eval()?.try_into()?;
+        let lhs: i32 = (*self.lhs.to_owned()).eval()?.try_into()?;
 
-        let rhs: i32 = (*self.rhs.clone()).eval()?.try_into()?;
+        let rhs: i32 = (*self.rhs.to_owned()).eval()?.try_into()?;
 
         Ok((lhs, rhs))
     }
@@ -120,20 +120,28 @@ impl BinExpr {
                 Ok(Expr::Num(lhs / rhs))
             }
             BinOp::EqSign => Ok(Expr::Bool(self.lhs.eval()? == self.rhs.eval()?)),
-            BinOp::GreaterSign => todo!(),
-            BinOp::LessSign => todo!(),
-            BinOp::GreaterEqSign => todo!(),
-            BinOp::LessEqSign => todo!(),
-            BinOp::NeqSign => todo!(),
-        }
+            BinOp::GreaterSign => {
+                let (lhs, rhs) = self.try_into_nums()?;
 
-        // match (self.lhs.as_ref(), self.rhs.as_ref()) {
-        //     (Expr::Num(a), Expr::Num(b)) => Ok(Expr::Bool(a == b)),
-        //     (Expr::Str(a), Expr::Str(b)) => Ok(Expr::Bool(a == b)),
-        //     (Expr::Bool(a), Expr::Bool(b)) => Ok(Expr::Bool(a == b)),
-        //     (Expr::Bin(a), Expr::Bin(b)) => Ok(Expr::Bool(a.eval()? == b.eval()?)),
-        //     _ => Err(ParserError::ExprError(ExprError::FailedBinEvaluation)),
-        // }
+                Ok(Expr::Bool(lhs > rhs))
+            }
+            BinOp::LessSign => {
+                let (lhs, rhs) = self.try_into_nums()?;
+
+                Ok(Expr::Bool(lhs < rhs))
+            }
+            BinOp::GreaterEqSign => {
+                let (lhs, rhs) = self.try_into_nums()?;
+
+                Ok(Expr::Bool(lhs >= rhs))
+            }
+            BinOp::LessEqSign => {
+                let (lhs, rhs) = self.try_into_nums()?;
+
+                Ok(Expr::Bool(lhs <= rhs))
+            }
+            BinOp::NeqSign => Ok(Expr::Bool(self.lhs.eval()? != self.rhs.eval()?)),
+        }
     }
 }
 

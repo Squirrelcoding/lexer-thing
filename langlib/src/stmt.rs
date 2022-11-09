@@ -1,8 +1,3 @@
-use crate::{
-    lexer::token::{Keyword, Token},
-    parser::{error::ParserError, Parser},
-};
-
 use super::expr::Expr;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -12,42 +7,7 @@ pub enum Stmt {
     ExprStatement(Expr),
 }
 
-impl Stmt {
-    #[allow(clippy::single_match)]
-    pub fn from_tokens(tokens: &[Token]) -> Result<Self, ParserError> {
-        match &tokens[0] {
-            Token::Keyword(keyword) => match keyword {
-                Keyword::Let => {
-                    // let statements must be at least 4 tokens long.
-                    if tokens.len() < 4 {
-                        return Err(ParserError::InvalidLetStatement);
-                    }
-
-                    // Check for identifier
-                    let ident = match tokens[1].clone() {
-                        Token::Ident(ident) => ident,
-                        _ => return Err(ParserError::Expected(Token::Ident("".to_owned()))),
-                    };
-
-                    // Check if there is an Declaration sign.
-                    if Token::DeclarationSign != tokens[2] {
-                        return Err(ParserError::Expected(Token::DeclarationSign));
-                    }
-
-                    let expr = Parser::new(tokens[3..].to_vec()).expr()?;
-
-                    Ok(Self::Declaration(Declaration { ident, val: expr }))
-                }
-                _ => Err(ParserError::StmtErr(StmtErr::UnknownKeyword)),
-            },
-            _ => {
-                let expr = Parser::new(tokens.to_vec()).expr()?;
-
-                Ok(Stmt::ExprStatement(expr))
-            }
-        }
-    }
-}
+impl Stmt {}
 
 #[derive(Debug, Clone, Eq, PartialEq, thiserror::Error)]
 pub enum StmtErr {
@@ -72,6 +32,7 @@ mod stmt_tests {
             op::BinOp,
             token::{Keyword, Token},
         },
+        parser::Parser,
         stmt::Declaration,
     };
 
@@ -91,7 +52,7 @@ mod stmt_tests {
             Token::Semi,
         ];
 
-        let binding = Stmt::from_tokens(&tokens);
+        let binding = Parser::new(tokens).stmt();
 
         assert!(binding.is_ok());
 
@@ -118,13 +79,13 @@ mod stmt_tests {
             Token::DeclarationSign,
             Token::LeftBracket,
             Token::Keyword(Keyword::True),
-            Token::EqSign,
+            Token::Op(BinOp::EqSign),
             Token::Keyword(Keyword::False),
             Token::RightBracket,
             Token::Semi,
         ];
 
-        let binding = Stmt::from_tokens(&tokens);
+        let binding = Parser::new(tokens).stmt();
 
         assert!(binding.is_ok());
 
@@ -157,7 +118,7 @@ mod stmt_tests {
             Token::Semi,
         ];
 
-        let binding = Stmt::from_tokens(&tokens);
+        let binding = Parser::new(tokens).stmt();
 
         assert!(binding.is_ok());
 

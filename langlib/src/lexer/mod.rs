@@ -29,16 +29,14 @@ impl<'a> Lexer<'a> {
 
         loop {
             match self.next_token() {
-                Ok(token) => {
-                    
-                    vec.push(token.0)},
-                    Err(err) => match err {
-                        LexerError::UnexpectedEOF => break,
-                        _ => return Err(err),
-                    },
-                }
+                Ok(token) => vec.push(token.0),
+                Err(err) => match err {
+                    LexerError::UnexpectedEOF => break,
+                    _ => return Err(err),
+                },
             }
-            
+        }
+
         Ok(vec)
     }
 
@@ -305,7 +303,7 @@ mod lexer_tokenizer_tests {
                 Token::Semi,
                 Token::Keyword(Keyword::Let),
                 Token::Ident("b".to_owned()),
-                Token::EqSign,
+                Token::Op(BinOp::EqSign),
                 Token::String("4".to_owned()),
                 Token::Semi
             ]
@@ -326,7 +324,6 @@ mod lexer_tokenizer_tests {
         let result = lexer.tokenize();
         assert_eq!(result.unwrap(), vec![Token::Op(BinOp::NeqSign)]);
 
-
         let g = ">";
 
         let mut lexer = Lexer::new(g);
@@ -344,12 +341,11 @@ mod lexer_tokenizer_tests {
         let mut lexer = Lexer::new(l);
         let result = lexer.tokenize();
         assert_eq!(result.unwrap(), vec![Token::Op(BinOp::LessSign)]);
-        
+
         let leq = "<=";
 
         let mut lexer = Lexer::new(leq);
         let result = lexer.tokenize();
         assert_eq!(result.unwrap(), vec![Token::Op(BinOp::LessEqSign)]);
     }
-
 }

@@ -1,7 +1,5 @@
-mod e;
 pub mod error;
 mod expr;
-mod num;
 mod stmt;
 
 use crate::stmt::Stmt;
@@ -32,7 +30,7 @@ impl Parser {
         while !self.is_at_end() {
             let stmt = self.stmt()?;
 
-            // Advance for some weird edge case.
+            // Advance for reasons not even i know.
             self.adv();
 
             stmt_vec.push(stmt);
@@ -49,11 +47,9 @@ impl Parser {
         match possible_tokens.iter().find_map(|token| {
             // Return the token if the current token matches
 
-            if !self.is_at_end() {
-                if &self.tokens[self.cursor] == token {
-                    self.adv();
-                    return Some(token.to_owned());
-                }
+            if (!self.is_at_end()) && (&self.tokens[self.cursor] == token) {
+                self.adv();
+                return Some(token.to_owned());
             }
             None
         }) {
@@ -125,7 +121,7 @@ impl Parser {
             return Err(ParserError::InvalidTokenIndex);
         }
 
-        Ok(self.tokens[self.cursor - 1].clone())
+        Ok(self.tokens[self.cursor - 1].to_owned())
     }
 
     /// Returns the current token, if there is one.
@@ -142,7 +138,7 @@ impl Parser {
             return Err(ParserError::InvalidTokenIndex);
         }
 
-        Ok(self.tokens[i].clone())
+        Ok(self.tokens[i].to_owned())
     }
 
     /// Returns a boolean indicating whether the position is at the end of the token stream.
@@ -186,8 +182,6 @@ mod parser_tests {
         (1..(parser.tokens.len() - 1)).for_each(|_| {
             parser.adv();
         });
-
-        assert!(parser.is_at_end());
 
         assert_eq!(parser.pos(), parser.tokens.len() - 1);
     }
