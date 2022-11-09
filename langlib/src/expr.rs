@@ -120,6 +120,11 @@ impl BinExpr {
                 Ok(Expr::Num(lhs / rhs))
             }
             BinOp::EqSign => Ok(Expr::Bool(self.lhs.eval()? == self.rhs.eval()?)),
+            BinOp::GreaterSign => todo!(),
+            BinOp::LessSign => todo!(),
+            BinOp::GreaterEqSign => todo!(),
+            BinOp::LessEqSign => todo!(),
+            BinOp::NeqSign => todo!(),
         }
 
         // match (self.lhs.as_ref(), self.rhs.as_ref()) {

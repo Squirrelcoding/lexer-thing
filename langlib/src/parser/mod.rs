@@ -49,9 +49,11 @@ impl Parser {
         match possible_tokens.iter().find_map(|token| {
             // Return the token if the current token matches
 
-            if &self.tokens[self.cursor] == token {
-                self.adv();
-                return Some(token.to_owned());
+            if !self.is_at_end() {
+                if &self.tokens[self.cursor] == token {
+                    self.adv();
+                    return Some(token.to_owned());
+                }
             }
             None
         }) {
@@ -128,10 +130,6 @@ impl Parser {
 
     /// Returns the current token, if there is one.
     fn curr(&self) -> Result<Token, ParserError> {
-        if self.tokens.len() == 1 {
-            return Ok(self.tokens[0].to_owned());
-        }
-
         if self.is_at_end() {
             return Err(ParserError::UnexpectedEOF);
         }
@@ -149,10 +147,6 @@ impl Parser {
 
     /// Returns a boolean indicating whether the position is at the end of the token stream.
     pub fn is_at_end(&self) -> bool {
-        // We're always going to be at the end in this case.
-        if self.tokens.len() == 1 {
-            return true;
-        }
         self.cursor >= self.tokens.len()
     }
 }

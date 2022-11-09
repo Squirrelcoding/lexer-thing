@@ -10,73 +10,79 @@ use super::{error::ParserError, Parser};
 
 impl Parser {
     pub fn expr_e(&mut self) -> Result<Expr, ParserError> {
-        todo!()
+        self.compare_e()
     }
 
     pub fn compare_e(&mut self) -> Result<Expr, ParserError> {
-        let lhs = self.comparision_e()?;
-        let op = todo!();
-        let rhs = self.comparision_e()?;
+        let mut lhs = self.comparision_e()?;
 
-        todo!()
+        while let Some(op) = self.matches(&[
+            Token::Op(BinOp::EqSign),
+            Token::Op(BinOp::NeqSign),
+        ]) {
+            let rhs = self.comparision_e()?;
+            
+            lhs = Expr::Bin(BinExpr {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+                op: op.try_into_op()?,
+            });
+        }
+
+        Ok(lhs)
     }
 
     pub fn comparision_e(&mut self) -> Result<Expr, ParserError> {
-        let lhs = self.term_e()?;
-        let op = todo!();
-        let rhs = self.term_e()?;
+        let mut lhs = self.term_e()?;
 
-        todo!()
+        while let Some(op) = self.matches(&[
+            Token::Op(BinOp::GreaterSign),
+            Token::Op(BinOp::GreaterEqSign),
+            Token::Op(BinOp::LessSign),
+            Token::Op(BinOp::LessEqSign),
+        ]) {
+            let rhs = self.term_e()?;
+
+            lhs = Expr::Bin(BinExpr {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+                op: op.try_into_op()?,
+            });
+        }
+
+        Ok(lhs)
     }
 
     pub fn term_e(&mut self) -> Result<Expr, ParserError> {
-        let lhs = self.factor_e()?;
+        let mut lhs = self.factor_e()?;
 
-        let op = match self.curr()? {
-            Token::Op(op) => match op {
-                BinOp::Add | BinOp::Sub => {
-                    self.adv();
-                    op
-                }
-                token => return Err(ParserError::UnexpectedToken(Token::Op(token))),
-            },
+        while let Some(op) = self.matches(&[Token::Op(BinOp::Add), Token::Op(BinOp::Sub)]) {
+            let rhs = self.factor_e()?;
 
-            // There is no token that can be used.
-            _ => return Ok(lhs),
-        };
+            lhs = Expr::Bin(BinExpr {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+                op: op.try_into_op()?,
+            });
+        }
 
-        let rhs = self.factor_e()?;
-
-        Ok(Expr::Bin(BinExpr {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-            op,
-        }))
+        Ok(lhs)
     }
 
     pub fn factor_e(&mut self) -> Result<Expr, ParserError> {
-        let lhs = self.unary_e()?;
+        let mut lhs = self.unary_e()?;
 
-        let op = match self.curr()? {
-            Token::Op(op) => match op {
-                BinOp::Mul | BinOp::Div => {
-                    self.adv();
-                    op
-                }
-                token => return Err(ParserError::UnexpectedToken(Token::Op(token))),
-            },
+        while let Some(op) = self.matches(&[Token::Op(BinOp::Mul), Token::Op(BinOp::Div)]) {
+            let rhs = self.unary_e()?;
 
-            // There is no token that can be used.
-            _ => return Ok(lhs),
-        };
+            lhs = Expr::Bin(BinExpr {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+                op: op.try_into_op()?,
+            });
+        }
 
-        let rhs = self.unary_e()?;
-
-        Ok(Expr::Bin(BinExpr {
-            lhs: Box::new(lhs),
-            rhs: Box::new(rhs),
-            op,
-        }))
+        Ok(lhs)
     }
 
     pub fn unary_e(&mut self) -> Result<Expr, ParserError> {
@@ -261,7 +267,7 @@ mod e_tests {
         let tokens = Lexer::new(s).tokenize().unwrap();
         let expr = Parser::new(tokens).factor_e();
 
-        assert!(expr.is_err());
+        assert!(expr.is_ok());
 
         let s = "25";
         let tokens = Lexer::new(s).tokenize().unwrap();
@@ -269,5 +275,197 @@ mod e_tests {
 
         assert!(expr.is_ok());
         assert_eq!(expr.unwrap(), Expr::Num(25))
+    }
+
+    #[test]
+    fn test_comparision_multiple() {
+        let s = "12 > 43 <= 324";
+
+        let tokens = Lexer::new(s).tokenize().unwrap();
+        let result = Parser::new(tokens).comparision_e();
+
+        assert_eq!(
+            result.unwrap(),
+            Expr::Bin(BinExpr {
+                lhs: Box::new(Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Num(12)),
+                    rhs: Box::new(Expr::Num(43)),
+                    op: BinOp::GreaterSign
+                })),
+                rhs: Box::new(Expr::Num(324)),
+                op: BinOp::LessEqSign
+            })
+        );
+    }
+
+    #[test]
+    fn test_comparision() {
+        let s_1 = "32 + 324 / 23 + 25 / 234 - 234 >= 234 - 243 + 4232";
+
+        let tokens = Lexer::new(s_1).tokenize().unwrap();
+        let expr = Parser::new(tokens).comparision_e();
+
+        assert_eq!(
+            expr.unwrap(),
+            Expr::Bin(BinExpr {
+                lhs: Box::new(Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Num(32)),
+                            rhs: Box::new(Expr::Bin(BinExpr {
+                                lhs: Box::new(Expr::Num(324)),
+                                rhs: Box::new(Expr::Num(23)),
+                                op: BinOp::Div
+                            })),
+                            op: BinOp::Add
+                        })),
+                        rhs: Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Num(25)),
+                            rhs: Box::new(Expr::Num(234)),
+                            op: BinOp::Div
+                        })),
+                        op: BinOp::Add
+                    })),
+                    rhs: Box::new(Expr::Num(234)),
+                    op: BinOp::Sub
+                })),
+                rhs: Box::new(Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Num(234)),
+                        rhs: Box::new(Expr::Num(243)),
+                        op: BinOp::Sub
+                    })),
+                    rhs: Box::new(Expr::Num(4232)),
+                    op: BinOp::Add
+                })),
+                op: BinOp::GreaterEqSign
+            })
+        );
+
+        let s_2 = "32 + 324 / 23 + 25 / 234 - 234 > 234 - 243 + 4232";
+
+        let tokens = Lexer::new(s_2).tokenize().unwrap();
+        let expr = Parser::new(tokens).comparision_e();
+
+        assert_eq!(
+            expr.unwrap(),
+            Expr::Bin(BinExpr {
+                lhs: Box::new(Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Num(32)),
+                            rhs: Box::new(Expr::Bin(BinExpr {
+                                lhs: Box::new(Expr::Num(324)),
+                                rhs: Box::new(Expr::Num(23)),
+                                op: BinOp::Div
+                            })),
+                            op: BinOp::Add
+                        })),
+                        rhs: Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Num(25)),
+                            rhs: Box::new(Expr::Num(234)),
+                            op: BinOp::Div
+                        })),
+                        op: BinOp::Add
+                    })),
+                    rhs: Box::new(Expr::Num(234)),
+                    op: BinOp::Sub
+                })),
+                rhs: Box::new(Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Num(234)),
+                        rhs: Box::new(Expr::Num(243)),
+                        op: BinOp::Sub
+                    })),
+                    rhs: Box::new(Expr::Num(4232)),
+                    op: BinOp::Add
+                })),
+                op: BinOp::GreaterSign
+            })
+        );
+
+        let s_3 = "32 + 324 / 23 + 25 / 234 - 234 <= 234 - 243 + 4232";
+
+        let tokens = Lexer::new(s_3).tokenize().unwrap();
+        let expr = Parser::new(tokens).comparision_e();
+
+        assert_eq!(
+            expr.unwrap(),
+            Expr::Bin(BinExpr {
+                lhs: Box::new(Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Num(32)),
+                            rhs: Box::new(Expr::Bin(BinExpr {
+                                lhs: Box::new(Expr::Num(324)),
+                                rhs: Box::new(Expr::Num(23)),
+                                op: BinOp::Div
+                            })),
+                            op: BinOp::Add
+                        })),
+                        rhs: Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Num(25)),
+                            rhs: Box::new(Expr::Num(234)),
+                            op: BinOp::Div
+                        })),
+                        op: BinOp::Add
+                    })),
+                    rhs: Box::new(Expr::Num(234)),
+                    op: BinOp::Sub
+                })),
+                rhs: Box::new(Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Num(234)),
+                        rhs: Box::new(Expr::Num(243)),
+                        op: BinOp::Sub
+                    })),
+                    rhs: Box::new(Expr::Num(4232)),
+                    op: BinOp::Add
+                })),
+                op: BinOp::LessEqSign
+            })
+        );
+
+        let s_4 = "32 + 324 / 23 + 25 / 234 - 234 < 234 - 243 + 4232";
+
+        let tokens = Lexer::new(s_4).tokenize().unwrap();
+        let expr = Parser::new(tokens).comparision_e();
+
+        assert_eq!(
+            expr.unwrap(),
+            Expr::Bin(BinExpr {
+                lhs: Box::new(Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Num(32)),
+                            rhs: Box::new(Expr::Bin(BinExpr {
+                                lhs: Box::new(Expr::Num(324)),
+                                rhs: Box::new(Expr::Num(23)),
+                                op: BinOp::Div
+                            })),
+                            op: BinOp::Add
+                        })),
+                        rhs: Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Num(25)),
+                            rhs: Box::new(Expr::Num(234)),
+                            op: BinOp::Div
+                        })),
+                        op: BinOp::Add
+                    })),
+                    rhs: Box::new(Expr::Num(234)),
+                    op: BinOp::Sub
+                })),
+                rhs: Box::new(Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Num(234)),
+                        rhs: Box::new(Expr::Num(243)),
+                        op: BinOp::Sub
+                    })),
+                    rhs: Box::new(Expr::Num(4232)),
+                    op: BinOp::Add
+                })),
+                op: BinOp::LessSign
+            })
+        );
     }
 }

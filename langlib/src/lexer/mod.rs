@@ -29,14 +29,16 @@ impl<'a> Lexer<'a> {
 
         loop {
             match self.next_token() {
-                Ok(token) => vec.push(token.0),
-                Err(err) => match err {
-                    LexerError::UnexpectedEOF => break,
-                    _ => return Err(err),
-                },
+                Ok(token) => {
+                    
+                    vec.push(token.0)},
+                    Err(err) => match err {
+                        LexerError::UnexpectedEOF => break,
+                        _ => return Err(err),
+                    },
+                }
             }
-        }
-
+            
         Ok(vec)
     }
 
@@ -69,14 +71,36 @@ impl<'a> Lexer<'a> {
             '/' => Ok((Token::Op(BinOp::Div), 1)),
             '=' => {
                 if Some('=') == data.chars().nth(1) {
-                    return Ok((Token::Op(BinOp::EqSign), 2));
+                    Ok((Token::Op(BinOp::EqSign), 2))
+                } else {
+                    Ok((Token::DeclarationSign, 1))
                 }
-                Ok((Token::DeclarationSign, 1))
             }
+
             '(' => Ok((Token::LeftBracket, 1)),
             ')' => Ok((Token::RightBracket, 1)),
             ';' => Ok((Token::Semi, 1)),
-            '!' => Ok((Token::UnOp(UnOp::Bang), 1)),
+            '!' => {
+                if Some('=') == data.chars().nth(1) {
+                    Ok((Token::Op(BinOp::NeqSign), 2))
+                } else {
+                    Ok((Token::UnOp(UnOp::Bang), 1))
+                }
+            }
+            '>' => {
+                if Some('=') == data.chars().nth(1) {
+                    Ok((Token::Op(BinOp::GreaterEqSign), 2))
+                } else {
+                    Ok((Token::Op(BinOp::GreaterSign), 1))
+                }
+            }
+            '<' => {
+                if Some('=') == data.chars().nth(1) {
+                    Ok((Token::Op(BinOp::LessEqSign), 2))
+                } else {
+                    Ok((Token::Op(BinOp::LessSign), 1))
+                }
+            }
             '"' | '\'' => Lexer::tokenize_string(data),
             '0'..='9' => Lexer::tokenize_num(data),
             _ => Lexer::tokenize_word(data),
@@ -287,4 +311,45 @@ mod lexer_tokenizer_tests {
             ]
         );
     }
+
+    #[test]
+    fn test_comparision_signs() {
+        let eq = "==";
+
+        let mut lexer = Lexer::new(eq);
+        let result = lexer.tokenize();
+        assert_eq!(result.unwrap(), vec![Token::Op(BinOp::EqSign)]);
+
+        let neq = "!=";
+
+        let mut lexer = Lexer::new(neq);
+        let result = lexer.tokenize();
+        assert_eq!(result.unwrap(), vec![Token::Op(BinOp::NeqSign)]);
+
+
+        let g = ">";
+
+        let mut lexer = Lexer::new(g);
+        let result = lexer.tokenize();
+        assert_eq!(result.unwrap(), vec![Token::Op(BinOp::GreaterSign)]);
+
+        let geq = ">=";
+
+        let mut lexer = Lexer::new(geq);
+        let result = lexer.tokenize();
+        assert_eq!(result.unwrap(), vec![Token::Op(BinOp::GreaterEqSign)]);
+
+        let l = "<";
+
+        let mut lexer = Lexer::new(l);
+        let result = lexer.tokenize();
+        assert_eq!(result.unwrap(), vec![Token::Op(BinOp::LessSign)]);
+        
+        let leq = "<=";
+
+        let mut lexer = Lexer::new(leq);
+        let result = lexer.tokenize();
+        assert_eq!(result.unwrap(), vec![Token::Op(BinOp::LessEqSign)]);
+    }
+
 }

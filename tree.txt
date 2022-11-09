@@ -1,20 +1,32 @@
 Bin(
     BinExpr {
-        lhs: Bin(
+         lhs: Bin(
             BinExpr { 
-                lhs: Bin(
+                lhs: 
+                Bin(
                     BinExpr { 
-                        lhs: Num(3), 
-                        rhs: Num(15), 
+                        lhs: Num(32), 
+                        rhs: Bin(
+                            BinExpr { 
+                                lhs: Num(324), 
+                                rhs: Num(23), 
+                                op: Div 
+                            }
+                        ), 
                         op: Add 
                     }
                 ), 
-                rhs: Num(2), 
-                op: Div 
+                rhs: Bin(
+                    BinExpr { 
+                        lhs: Num(25), 
+                        rhs: Num(234), 
+                        op: Div 
+                    }
+                ), 
+                op: Add 
             }
         ), 
-        rhs: 
-        Num(20), 
-        op: EqSign 
+        rhs: Num(234), 
+        op: Sub 
     }
 )
