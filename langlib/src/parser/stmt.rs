@@ -9,7 +9,7 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse a statement from the next tokens until it encounters a semicolon.
     pub fn stmt(&mut self) -> Result<Stmt, ParserError> {
-        let curr = self.cursor;
+
 
         // The index of the next semicolon.
         let idx = match (self.cursor..self.tokens.len())
@@ -30,46 +30,13 @@ impl Parser {
                 // Match the keyword
                 Token::Keyword(keyword) => match keyword {
                     // If it's an Declaration statement
-                    Keyword::Let => {
-                        // Then check if these things apply
-                        if self.match_rule(&[
-                            Token::Keyword(Keyword::Let),
-                            Token::Ident("".to_owned()),
-                        ]) {
-                            if self.match_rule(&[Token::DeclarationSign]) {
-                                // Get the identier and value
-                                let ident = self.at(self.cursor - 2)?.try_into_ident()?;
-
-                                let expr = self.expr()?;
-
-                                return Ok(Stmt::Declaration(Declaration { ident, val: expr }));
-                            }
-
-                            let ident = self.prev()?.try_into_ident()?;
-
-                            // Set the variable to null by default;
-                            return Ok(Stmt::Declaration(Declaration {
-                                ident,
-                                val: Expr::Null,
-                            }));
-                        }
-
-                        // Reset position
-                        self.cursor = curr;
-                        Err(ParserError::Expected(Token::Keyword(Keyword::Let)))
-                    }
-                    Keyword::Print => {
-                        if self.match_rule(&[Token::Keyword(Keyword::Print)]) {
-                            let expr = self.expr()?;
-                            return Ok(Stmt::Print(expr));
-                        }
-
-                        // Reset position
-                        Err(ParserError::BadStatement)
-                    }
+                    Keyword::Let => self.declaration(),
+                    Keyword::Print => self.print(),
 
                     _ => Err(ParserError::BadStatement),
                 },
+
+                Token::LeftCurly => self.block(),
 
                 // Attempt to parse an expression statement
                 _ => match self.expr() {
@@ -83,26 +50,58 @@ impl Parser {
         }
     }
 
-    /// Attempts to match an Declaration
-    pub fn declaration(&mut self) -> Result<Stmt, ParserError> {
-        // Check if it starts with a `let` keyword
-        if !self.match_rule(&[Token::Keyword(Keyword::Let)]) {
-            return Err(ParserError::Expected(Token::Keyword(Keyword::Let)));
+    /// Attempts to parse a declaration statement.
+    fn declaration(&mut self) -> Result<Stmt, ParserError> {
+        if self.match_rule(&[Token::Keyword(Keyword::Let), Token::Ident("".to_owned())]) {
+            if self.match_rule(&[Token::DeclarationSign]) {
+                // Get the identier and value
+                let ident = self.at(self.cursor - 2)?.try_into_ident()?;
+
+                let expr = self.expr()?;
+
+                return Ok(Stmt::Declaration(Declaration { ident, val: expr }));
+            }
+
+            let ident = self.prev()?.try_into_ident()?;
+
+            // Set the variable to null by default;
+            return Ok(Stmt::Declaration(Declaration {
+                ident,
+                val: Expr::Null,
+            }));
         }
 
-        // Identifier
-        let ident = self.curr()?.try_into_ident()?;
+        Err(ParserError::Expected(Token::Keyword(Keyword::Let)))
+    }
 
-        // Advance because we didn't advance for the identifier
+    /// Attempts to parse a print statement.
+    fn print(&mut self) -> Result<Stmt, ParserError> {
+        if self.match_rule(&[Token::Keyword(Keyword::Print)]) {
+            let expr = self.expr()?;
+            return Ok(Stmt::Print(expr));
+        }
+
+        // Reset position
+        Err(ParserError::BadStatement)
+    }
+
+    /// Attempts to parse a block.
+    fn block(&mut self) -> Result<Stmt, ParserError> {
         self.adv();
 
-        // Check if there follows an equals sign
-        if !self.match_rule(&[Token::DeclarationSign]) {
-            return Err(ParserError::Expected(Token::DeclarationSign));
+        let mut stmts = Vec::new();
+
+
+        while self.curr() != Ok(Token::RightCurly) {
+
+
+            let stmt = self.stmt()?;
+
+            self.adv();
+
+            stmts.push(stmt);
         }
 
-        let expr = self.expr()?;
-
-        Ok(Stmt::Declaration(Declaration { ident, val: expr }))
+        Ok(Stmt::Block(stmts))
     }
 }

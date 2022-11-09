@@ -5,9 +5,8 @@ pub enum Stmt {
     Declaration(Declaration),
     Print(Expr),
     ExprStatement(Expr),
+    Block(Vec<Stmt>),
 }
-
-impl Stmt {}
 
 #[derive(Debug, Clone, Eq, PartialEq, thiserror::Error)]
 pub enum StmtErr {

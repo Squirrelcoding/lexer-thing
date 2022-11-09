@@ -15,6 +15,8 @@ pub enum Token {
     String(String),
     LeftBracket,
     RightBracket,
+    LeftCurly,
+    RightCurly,
     Ident(String),
     Keyword(Keyword),
 }

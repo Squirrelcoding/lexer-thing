@@ -14,12 +14,12 @@ use crate::{
 use self::env::Env;
 
 #[derive(Debug)]
-pub struct Interpreter {
+pub struct Interpreter<'a> {
     instructions: Vec<Stmt>,
-    env: Env,
+    env: Env<'a>,
 }
 
-impl Interpreter {
+impl<'a> Interpreter<'a> {
     pub fn new(instructions: Vec<Stmt>) -> Self {
         Self {
             instructions,
@@ -56,13 +56,20 @@ impl Interpreter {
         }
     }
 
-    /// Interprets the instructions
     pub fn interpret(&mut self) -> Result<(), Err> {
         for stmt in self.instructions.iter() {
+            self.execute_stmt(stmt)?;
+        }
+
+        Ok(())
+    }
+
+    /// Interprets the instructions
+    pub fn execute_stmt(&mut self, stmt: &Stmt) -> Result<(), Err> {
+
             match stmt {
                 Stmt::Declaration(declaration) => {
-                    if let Err(err) = self
-                        .env
+                    if let Err(err) = self.env
                         .define(declaration.ident.to_owned(), declaration.val.to_owned())
                     {
                         return Err(Err::RuntimeErr(err));
@@ -77,7 +84,19 @@ impl Interpreter {
                 Stmt::ExprStatement(expr) => {
                     println!("{expr}");
                 }
-            }
+                Stmt::Block(stmts) => {
+                    let mut env_save = &self.env;
+
+                    let mut new_env = Env::new();
+                    new_env.set_parent(&mut self.env);
+
+                    for block_stmt in stmts {
+                        self.execute_stmt(block_stmt);
+                    }
+
+                    todo!()
+                }
+
         }
 
         Ok(())

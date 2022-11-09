@@ -77,6 +77,8 @@ impl<'a> Lexer<'a> {
 
             '(' => Ok((Token::LeftBracket, 1)),
             ')' => Ok((Token::RightBracket, 1)),
+            '{' => Ok((Token::LeftCurly, 1)),
+            '}' => Ok((Token::RightCurly, 1)),
             ';' => Ok((Token::Semi, 1)),
             '!' => {
                 if Some('=') == data.chars().nth(1) {

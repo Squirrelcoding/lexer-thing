@@ -1,6 +1,6 @@
 # Lexer-thing
 
-A little toy language that I'm currently working on, written in Rust. So far it can only interpret basic expressions and statements. It's called "lexer-thing" because it was originally supposed to be a lexer. But then I wanted to turn the project into a language. So far the following code is valid:
+A little toy language that I'm currently working on by following [*Crafting Interpreters*](https://craftinginterpreters.com/), but its written in Rust. So far it can only interpret basic expressions and statements. It's called "lexer-thing" because it was originally supposed to be a lexer. But then I wanted to turn the project into a language. So far the following code is valid:
 ```
 let a = 250;
 let b = 2;
