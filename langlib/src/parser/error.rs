@@ -44,4 +44,7 @@ pub enum ParserError {
 
     #[error("An invalid comparision was attempted to be made.")]
     InvalidComparision,
+
+    #[error("An unexpected token was found.")]
+    UnexpectedToken(Token),
 }

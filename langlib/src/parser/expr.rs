@@ -11,11 +11,12 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse an expression
     pub fn expr(&mut self) -> Result<Expr, ParserError> {
-        self.un_expr()
+        self.compare()
     }
 
     /// Attempts to parse a string token, and advances if successful.
     pub fn un_expr(&mut self) -> Result<Expr, ParserError> {
+        // Check if there's a unary operator and then a left bracket
         if let Some(token) = self.matches(&[Token::UnOp(UnOp::Bang), Token::UnOp(UnOp::Minus)]) {
             if self.match_rule(&[Token::LeftBracket]) {
                 let expr = self.expr()?;
@@ -26,21 +27,23 @@ impl Parser {
 
                 return Ok(Expr::Unary(token.try_into_un_op()?, Box::new(expr)));
             }
-
+        }
+        if self.match_rule(&[Token::LeftBracket]) {
             let expr = self.expr()?;
 
-            return Ok(Expr::Unary(token.try_into_un_op()?, Box::new(expr)));
+            if !self.match_rule(&[Token::RightBracket]) {
+                return Err(ParserError::Expected(Token::RightBracket));
+            }
+
+            return Ok(expr);
         }
 
-        match self.compare() {
-            Ok(expr) => Ok(expr),
-            Err(err) => Err(err),
-        }
+        unreachable!()
     }
 
     /// Attempts to parse a string token, and advances if successful.
     pub fn str_expr(&mut self) -> Result<Expr, ParserError> {
-        if let Token::String(string) = self.curr() {
+        if let Token::String(string) = self.curr()? {
             self.adv();
             return Ok(Expr::Str(string));
         }
@@ -50,7 +53,7 @@ impl Parser {
 
     /// Attempts to parse a variable token, and advances if successful.
     pub fn var_expr(&mut self) -> Result<Expr, ParserError> {
-        if let Token::Ident(string) = self.curr() {
+        if let Token::Ident(string) = self.curr()? {
             self.adv();
             return Ok(Expr::Var(string));
         }
@@ -75,17 +78,20 @@ impl Parser {
             .num_expr()
             .or_else(|_| self.var_expr())
             .or_else(|_| self.str_expr())
-            .or_else(|_| self.bool_expr())?;
+            .or_else(|_| self.bool_expr())
+            .or_else(|_| self.un_expr())?;
 
-        // Check if there's an equality sign, if not then return early.
+        // Check if there's an equality sign or if we're at the end of the file, if so then return early.
         if self.is_at_end() || !self.match_rule(&[Token::EqSign]) {
             return Ok(lhs);
         }
 
         let rhs = self
             .num_expr()
+            .or_else(|_| self.var_expr())
             .or_else(|_| self.str_expr())
-            .or_else(|_| self.bool_expr())?;
+            .or_else(|_| self.bool_expr())
+            .or_else(|_| self.un_expr())?;
 
         Ok(Expr::Bin(BinExpr::new(
             Box::new(lhs),

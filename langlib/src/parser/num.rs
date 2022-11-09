@@ -1,5 +1,5 @@
 use crate::{
-    expr::{Expr, BinExpr},
+    expr::{BinExpr, Expr},
     lexer::{op::BinOp, token::Token},
 };
 
@@ -20,13 +20,11 @@ impl Parser {
             let rhs = self.term()?;
 
             return match op {
-                BinOp::Add | BinOp::Sub => {
-                    Ok(Expr::Bin(BinExpr {
-                        lhs: Box::new(lhs),
-                        rhs: Box::new(rhs),
-                        op,
-                    }))
-                }
+                BinOp::Add | BinOp::Sub => Ok(Expr::Bin(BinExpr {
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                    op,
+                })),
                 _ => panic!(),
             };
         }
@@ -50,13 +48,11 @@ impl Parser {
             let rhs = self.factor()?;
 
             return match op {
-                BinOp::Mul | BinOp::Div => {
-                    Ok(Expr::Bin(BinExpr {
-                        lhs: Box::new(lhs),
-                        rhs: Box::new(rhs),
-                        op,
-                    }))
-                }
+                BinOp::Mul | BinOp::Div => Ok(Expr::Bin(BinExpr {
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                    op,
+                })),
                 _ => panic!(),
             };
         }
@@ -76,16 +72,15 @@ impl Parser {
             return Ok(result);
         }
 
-        Ok(self.num_var()?)
+        self.num_var()
     }
 
     /// Attempts to parse a number / identifier.
     pub fn num_var(&mut self) -> Result<Expr, ParserError> {
-
-        let result = match self.curr() {
+        let result = match self.curr()? {
             Token::Int(int) => Expr::Num(int),
             Token::Ident(ident) => Expr::Var(ident),
-            _ => return Err(ParserError::Expected(Token::Int(0)))
+            tok => return Err(ParserError::UnexpectedToken(tok)),
         };
 
         // Increment the cursor

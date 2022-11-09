@@ -1,21 +1,12 @@
-use langlib::{
-    interpreter::{Err},
-    lexer::Lexer,
-    parser::Parser,
-};
+use langlib::{interpreter::Err, lexer::Lexer, parser::Parser};
 
 fn main() -> Result<(), Err> {
-    let s = "let x = !(true == false);";
+    let s = "12 > 43 <= 324 + 2345 -3254  == 324 == 243 == 34";
 
-    let mut lexer = Lexer::new(s);
+    let tokens = Lexer::new(s).tokenize()?;
 
-    let binding_stmt = Parser::new(lexer.tokenize().unwrap()).stmt();
-
-    assert!(binding_stmt.is_ok());
-
-    let binding_stmt = binding_stmt.unwrap();
-
-    println!("{binding_stmt:?}");
+    let mut parser = Parser::new(tokens);
+    println!("expr: {}", parser.expr_e()?);
 
     Ok(())
 }

@@ -60,7 +60,6 @@ impl Parser {
                     }
                     Keyword::Print => {
                         if self.match_rule(&[Token::Keyword(Keyword::Print)]) {
-
                             let expr = self.expr()?;
                             return Ok(Stmt::Print(expr));
                         }
@@ -72,16 +71,10 @@ impl Parser {
                     _ => Err(ParserError::BadStatement),
                 },
 
-                // Reset position
-                _ => match token {
-                    Token::Int(int) => return Ok(Stmt::ExprStatement(Expr::Num(*int))),
-                    Token::String(string) => {
-                        return Ok(Stmt::ExprStatement(Expr::Str(string.to_owned())))
-                    }
-                    Token::Ident(ident) => {
-                        return Ok(Stmt::ExprStatement(Expr::Var(ident.to_owned())));
-                    }
-                    _ => return Err(ParserError::BadStatement),
+                // Attempt to parse an expression statement
+                _ => match self.expr() {
+                    Ok(expr) => Ok(Stmt::ExprStatement(expr)),
+                    Err(err) => Err(err),
                 },
             },
 
@@ -98,7 +91,7 @@ impl Parser {
         }
 
         // Identifier
-        let ident = self.curr().try_into_ident()?;
+        let ident = self.curr()?.try_into_ident()?;
 
         // Advance because we didn't advance for the identifier
         self.adv();

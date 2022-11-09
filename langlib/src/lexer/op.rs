@@ -6,6 +6,11 @@ pub enum BinOp {
     Mul,
     Div,
     EqSign,
+    NeqSign,
+    GreaterSign,
+    LessSign,
+    GreaterEqSign,
+    LessEqSign,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

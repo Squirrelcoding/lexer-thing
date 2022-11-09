@@ -2,7 +2,7 @@ use std::{fmt::Display, mem};
 
 use colored::Colorize;
 
-use crate::{lexer::{op::UnOp}, parser::error::ParserError};
+use crate::{lexer::op::UnOp, parser::error::ParserError};
 
 use super::lexer::op::BinOp;
 
@@ -21,9 +21,7 @@ pub enum Expr {
 impl Expr {
     pub fn eval(&self) -> Result<Expr, ParserError> {
         match self {
-            Expr::Bin(expr) => {
-                expr.clone().eval()
-            },
+            Expr::Bin(expr) => expr.clone().eval(),
 
             Expr::Unary(op, expr) => {
                 if mem::discriminant(&Expr::Bool(false)) != mem::discriminant(&expr.eval()?) {
@@ -91,46 +89,42 @@ impl BinExpr {
     }
 
     fn try_into_nums(&self) -> Result<(i32, i32), ParserError> {
-
         let lhs: i32 = (*self.lhs.clone()).eval()?.try_into()?;
 
-
         let rhs: i32 = (*self.rhs.clone()).eval()?.try_into()?;
-
 
         Ok((lhs, rhs))
     }
 
     /// Evaluates the expression, and consumes itself.
     pub fn eval(self) -> Result<Expr, ParserError> {
-
-
         match self.op {
             BinOp::Add => {
                 let (lhs, rhs) = self.try_into_nums()?;
 
                 Ok(Expr::Num(lhs + rhs))
-            },
+            }
             BinOp::Sub => {
                 let (lhs, rhs) = self.try_into_nums()?;
 
                 Ok(Expr::Num(lhs - rhs))
-            },
+            }
             BinOp::Mul => {
                 let (lhs, rhs) = self.try_into_nums()?;
 
                 Ok(Expr::Num(lhs * rhs))
-            },
+            }
             BinOp::Div => {
                 let (lhs, rhs) = self.try_into_nums()?;
 
                 Ok(Expr::Num(lhs / rhs))
-            },
-            BinOp::EqSign => {
-
-                Ok(Expr::Bool(self.lhs.eval()? == self.rhs.eval()?))
-
-            },
+            }
+            BinOp::EqSign => Ok(Expr::Bool(self.lhs.eval()? == self.rhs.eval()?)),
+            BinOp::GreaterSign => todo!(),
+            BinOp::LessSign => todo!(),
+            BinOp::GreaterEqSign => todo!(),
+            BinOp::LessEqSign => todo!(),
+            BinOp::NeqSign => todo!(),
         }
 
         // match (self.lhs.as_ref(), self.rhs.as_ref()) {
