@@ -6,7 +6,7 @@ use crate::{
     },
 };
 
-use super::{error::ParserError, Parser};
+use super::{err::ParserError, Parser};
 
 impl Parser {
     /// Attempts to parse an expression.

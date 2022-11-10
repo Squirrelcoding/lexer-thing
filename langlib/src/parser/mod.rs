@@ -1,10 +1,10 @@
-pub mod error;
+pub mod err;
 mod expr;
 mod stmt;
 
 use crate::stmt::Stmt;
 
-use self::error::ParserError;
+use self::err::ParserError;
 
 use super::lexer::token::Token;
 
@@ -118,7 +118,7 @@ impl Parser {
     /// Returns the previous token
     fn prev(&self) -> Result<Token, ParserError> {
         if self.cursor == 0 {
-            return Err(ParserError::InvalidTokenIndex);
+            return Err(ParserError::InvalidTokenIndex(self.cursor));
         }
 
         Ok(self.tokens[self.cursor - 1].to_owned())
@@ -135,7 +135,7 @@ impl Parser {
     /// Returns the token at the given index `i`
     fn at(&self, i: usize) -> Result<Token, ParserError> {
         if i >= self.tokens.len() {
-            return Err(ParserError::InvalidTokenIndex);
+            return Err(ParserError::InvalidTokenIndex(i));
         }
 
         Ok(self.tokens[i].to_owned())

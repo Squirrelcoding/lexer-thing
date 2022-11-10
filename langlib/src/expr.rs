@@ -2,7 +2,7 @@ use std::{fmt::Display, mem};
 
 use colored::Colorize;
 
-use crate::{lexer::op::UnOp, parser::error::ParserError};
+use crate::{lexer::op::UnOp, parser::err::ParserError};
 
 use super::lexer::op::BinOp;
 
@@ -49,6 +49,7 @@ impl Display for Expr {
             Expr::Str(string) => write!(f, "{}", format!("\"{string}\"").green()),
 
             Expr::Bool(bool) => write!(f, "{}", format!("{bool}").yellow()),
+            Expr::Null => write!(f, "{}", "null".bright_black()),
             other => write!(f, "{other:?}"),
         }
     }

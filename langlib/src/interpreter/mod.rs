@@ -2,12 +2,12 @@ mod env;
 mod err;
 
 use err::RuntimeErr;
-use std::{cell::RefCell, io};
+use std::{cell::RefCell, io::{self, Read}, path::Path, fs::OpenOptions};
 
 use crate::{
     expr::{BinExpr, Expr},
-    lexer::{Lexer, LexerError},
-    parser::{error::ParserError, Parser},
+    lexer::{Lexer, err::LexerError},
+    parser::{err::ParserError, Parser},
     stmt::Stmt,
 };
 
@@ -20,6 +20,23 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
+
+    pub fn from_file(path: &Path) -> Result<Self, Err> {
+
+        let mut file = OpenOptions::new().read(true).open(path)?;
+
+        let mut source = String::new();
+
+        file.read_to_string(&mut source)?;
+
+        let stmts = Parser::new(Lexer::new(&source).tokenize()?).get_statements()?;
+
+        Ok(Self {
+            instructions: stmts,
+            env: RefCell::new(Env::new())
+        })
+    }
+
     pub fn new(instructions: Vec<Stmt>) -> Self {
         Self {
             instructions,
@@ -126,7 +143,7 @@ impl Interpreter {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, thiserror::Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum Err {
     #[error("An error occurred during parsing.")]
     ParserError(#[from] ParserError),
@@ -134,4 +151,7 @@ pub enum Err {
     LexerError(#[from] LexerError),
     #[error("A runtime error has occured.")]
     RuntimeErr(#[from] RuntimeErr),
+
+    #[error("An IO error occured while attempting to read the file.")]
+    IOError(#[from] io::Error)
 }
