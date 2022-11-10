@@ -4,13 +4,13 @@ use crate::expr::Expr;
 
 use super::err::RuntimeErr;
 
-#[derive(Debug, Eq, PartialEq)]
-pub struct Env<'a> {
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub struct Env {
     vals: HashMap<String, Expr>,
-    parent: Option<&'a mut Env<'a>>,
+    parent: Option<Box<Env>>,
 }
 
-impl<'a> Env<'a> {
+impl Env {
     pub fn new() -> Self {
         Self {
             vals: HashMap::new(),
@@ -33,10 +33,6 @@ impl<'a> Env<'a> {
 
     /// Defines a new variable and stores it in the environment.
     pub fn define(&mut self, k: String, v: Expr) -> Result<(), RuntimeErr> {
-        if self.vals.get(&k).is_some() {
-            return Err(RuntimeErr::VarRedefine(k));
-        }
-
         if self.parent.is_some() {
             self.parent
                 .as_mut()
@@ -50,7 +46,7 @@ impl<'a> Env<'a> {
     }
 
     /// Sets the parent of the environment.
-    pub fn set_parent(&mut self, parent: &'a mut Env<'a>) {
-        self.parent = Some(parent);
+    pub fn set_parent(&mut self, parent: &Env) {
+        self.parent = Some(Box::new(parent.clone()));
     }
 }

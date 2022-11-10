@@ -2,7 +2,7 @@ mod env;
 mod err;
 
 use err::RuntimeErr;
-use std::io;
+use std::{cell::RefCell, io};
 
 use crate::{
     expr::{BinExpr, Expr},
@@ -14,23 +14,23 @@ use crate::{
 use self::env::Env;
 
 #[derive(Debug)]
-pub struct Interpreter<'a> {
+pub struct Interpreter {
     instructions: Vec<Stmt>,
-    env: Env<'a>,
+    env: RefCell<Env>,
 }
 
-impl<'a> Interpreter<'a> {
+impl Interpreter {
     pub fn new(instructions: Vec<Stmt>) -> Self {
         Self {
             instructions,
-            env: Env::new(),
+            env: RefCell::new(Env::new()),
         }
     }
 
     /// Visits an expression and executes it.
     fn visit_expr(&self, expr: Expr) -> Result<Expr, Err> {
         match expr {
-            Expr::Var(var) => match self.env.get(&var) {
+            Expr::Var(var) => match self.env.borrow().get(&var) {
                 Ok(val) => Ok(val.to_owned()),
                 Err(err) => Err(Err::RuntimeErr(err)),
             },
@@ -56,7 +56,9 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    pub fn interpret(&mut self) -> Result<(), Err> {
+    /// Interprets the code
+    pub fn interpret(&self) -> Result<(), Err> {
+
         for stmt in self.instructions.iter() {
             self.execute_stmt(stmt)?;
         }
@@ -65,38 +67,40 @@ impl<'a> Interpreter<'a> {
     }
 
     /// Interprets the instructions
-    pub fn execute_stmt(&mut self, stmt: &Stmt) -> Result<(), Err> {
+    pub fn execute_stmt(&self, stmt: &Stmt) -> Result<(), Err> {
+        match stmt {
+            Stmt::Declaration(declaration) => {
+                if let Err(err) = self
+                    .env
+                    .borrow_mut()
+                    .define(declaration.ident.to_owned(), declaration.val.to_owned())
+                {
+                    return Err(Err::RuntimeErr(err));
+                }
+            }
 
-            match stmt {
-                Stmt::Declaration(declaration) => {
-                    if let Err(err) = self.env
-                        .define(declaration.ident.to_owned(), declaration.val.to_owned())
-                    {
-                        return Err(Err::RuntimeErr(err));
-                    }
+            Stmt::Print(exprr) => {
+                let result = self.visit_expr(exprr.to_owned())?.eval()?;
+
+                println!("{}", result);
+            }
+            Stmt::ExprStatement(expr) => {
+                println!("{expr}");
+            }
+            Stmt::Block(stmts) => {
+                let prev = self.env.borrow().to_owned();
+
+                let mut new_env = Env::new();
+                new_env.set_parent(&prev);
+
+                *self.env.borrow_mut() = new_env;
+
+                for block_stmt in stmts {
+                    self.execute_stmt(block_stmt)?;
                 }
 
-                Stmt::Print(exprr) => {
-                    let result = self.visit_expr(exprr.to_owned())?.eval()?;
-
-                    println!("{}", result);
-                }
-                Stmt::ExprStatement(expr) => {
-                    println!("{expr}");
-                }
-                Stmt::Block(stmts) => {
-                    let mut env_save = &self.env;
-
-                    let mut new_env = Env::new();
-                    new_env.set_parent(&mut self.env);
-
-                    for block_stmt in stmts {
-                        self.execute_stmt(block_stmt);
-                    }
-
-                    todo!()
-                }
-
+                *self.env.borrow_mut() = prev;
+            }
         }
 
         Ok(())

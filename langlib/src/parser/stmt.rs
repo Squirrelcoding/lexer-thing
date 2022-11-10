@@ -9,8 +9,6 @@ use super::{error::ParserError, Parser};
 impl Parser {
     /// Attempts to parse a statement from the next tokens until it encounters a semicolon.
     pub fn stmt(&mut self) -> Result<Stmt, ParserError> {
-
-
         // The index of the next semicolon.
         let idx = match (self.cursor..self.tokens.len())
             .into_iter()
@@ -91,10 +89,7 @@ impl Parser {
 
         let mut stmts = Vec::new();
 
-
         while self.curr() != Ok(Token::RightCurly) {
-
-
             let stmt = self.stmt()?;
 
             self.adv();

@@ -18,16 +18,42 @@ let c = !(!true == false);
 let d = false;
 print "But c and d are:";
 print c == d;
+
+let i = 2;
+let j = "hello";
+{
+    let i = 15;
+    let k = false;
+    print i;
+    print j;
+    {
+        {
+            {
+                {
+                    print "x is different when it's in a small block:";
+                    let x = true;
+                    print x;
+                }
+            }
+        }
+    }
+}
+
+print i;
+print "Since k doesn't exist up here, the program crashes here!";
+print k;
+
 ```
 
 ## Currently working on
-- Lexical scope
+- Control flow
 ## Features
 - Basic unary expressions
 - Boolean, string, and integer literals
 - print statements
 - Basic variables
 - Comparisions for numbers (e.g `a > b` , `a != b`, etc.)
+- Lexical scope
 
 ## TODO
 - Theres gonna be a looooooooooootttttttt of refactoring sooner or later.
