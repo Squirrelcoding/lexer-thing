@@ -21,11 +21,11 @@ pub enum ParserError {
     #[error("An expression error has occured while parsing")]
     ExprError(#[from] ExprError),
 
-    #[error("An incomplete term was encountered while parsing")]
+    #[error("An incomplete term was encountered while parsing.")]
     BadTerm,
 
     #[error("A token at an invalid index was tried to be accesed")]
-    InvalidTokenIndex,
+    InvalidTokenIndex(usize),
 
     #[error("An expected end to the stream of tokens was encountered")]
     UnexpectedEOF,

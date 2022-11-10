@@ -4,7 +4,7 @@ use crate::{
     stmt::{Declaration, Stmt},
 };
 
-use super::{error::ParserError, Parser};
+use super::{err::ParserError, Parser};
 
 impl Parser {
     /// Attempts to parse a statement from the next tokens until it encounters a semicolon.

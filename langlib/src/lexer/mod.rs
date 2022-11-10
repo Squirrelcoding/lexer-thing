@@ -1,11 +1,12 @@
 pub mod op;
 pub mod token;
+pub mod err;
 
 use self::{
     op::{BinOp, UnOp},
     token::{Keyword, Token},
+    err::LexerError
 };
-use std::num::IntErrorKind;
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
@@ -59,7 +60,7 @@ impl<'a> Lexer<'a> {
     fn parse_token(data: &str) -> Result<(Token, usize), LexerError> {
         let next = match data.chars().next() {
             Some(c) => c,
-            None => return Err(LexerError::InvalidToken),
+            None => return Err(LexerError::UnexpectedEOF),
         };
 
         match next {
@@ -114,7 +115,7 @@ impl<'a> Lexer<'a> {
                 '\'' => '\'',
                 '"' => '"',
                 _ => {
-                    return Err(LexerError::InvalidToken);
+                    return Err(LexerError::InvalidChar(c));
                 }
             },
             None => return Err(LexerError::UnexpectedEOF),
@@ -186,10 +187,6 @@ impl<'a> Lexer<'a> {
             })
             .unwrap_or(s.len());
 
-        if x == 0 {
-            return Err(LexerError::InvalidToken);
-        }
-
         Ok((s[..x].to_owned(), x))
     }
 
@@ -212,17 +209,7 @@ impl<'a> Lexer<'a> {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, thiserror::Error)]
-pub enum LexerError {
-    #[error("Failed to parse int")]
-    IntError(IntErrorKind),
-    #[error("Invalid token encountered")]
-    InvalidToken,
-    #[error("Unexpected EOF encountered")]
-    UnexpectedEOF,
-    #[error("Expected '{0}'")]
-    Expected(char),
-}
+
 
 #[cfg(test)]
 mod lexer_tokenizer_tests {
