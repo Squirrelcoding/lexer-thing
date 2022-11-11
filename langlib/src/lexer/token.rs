@@ -88,6 +88,8 @@ pub enum Keyword {
     True,
     False,
     Let,
+    If,
+    Else,
     Print,
 }
 

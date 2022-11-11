@@ -1,11 +1,8 @@
 use std::path::Path;
 
-use langlib::{
-    interpreter::{Err, Interpreter}
-};
+use langlib::interpreter::Interpreter;
 
-fn main() -> Result<(), Err> {
-
+fn main() -> Result<(), langlib::interpreter::Err> {
     let interpreter = Interpreter::from_file(Path::new("test.lt"))?;
 
     interpreter.interpret()?;

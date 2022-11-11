@@ -2,11 +2,16 @@ mod env;
 mod err;
 
 use err::RuntimeErr;
-use std::{cell::RefCell, io::{self, Read}, path::Path, fs::OpenOptions};
+use std::{
+    cell::RefCell,
+    fs::OpenOptions,
+    io::{self, Read},
+    path::Path,
+};
 
 use crate::{
     expr::{BinExpr, Expr},
-    lexer::{Lexer, err::LexerError},
+    lexer::{err::LexerError, Lexer},
     parser::{err::ParserError, Parser},
     stmt::Stmt,
 };
@@ -20,9 +25,7 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
-
     pub fn from_file(path: &Path) -> Result<Self, Err> {
-
         let mut file = OpenOptions::new().read(true).open(path)?;
 
         let mut source = String::new();
@@ -33,7 +36,7 @@ impl Interpreter {
 
         Ok(Self {
             instructions: stmts,
-            env: RefCell::new(Env::new())
+            env: RefCell::new(Env::new()),
         })
     }
 
@@ -75,7 +78,6 @@ impl Interpreter {
 
     /// Interprets the code
     pub fn interpret(&self) -> Result<(), Err> {
-
         for stmt in self.instructions.iter() {
             self.execute_stmt(stmt)?;
         }
@@ -118,6 +120,20 @@ impl Interpreter {
 
                 *self.env.borrow_mut() = prev;
             }
+            Stmt::IfStmt(expr, block, else_block) => {
+                let result = match self.visit_expr(expr.to_owned())? {
+                    Expr::Bool(b) => b,
+                    expr => return Err(Err::RuntimeErr(RuntimeErr::InvalidExpr(expr))),
+                };
+
+                if result {
+                    self.execute_stmt(block)?;
+                } else {
+                    if let Some(else_block) = else_block {
+                        self.execute_stmt(else_block)?;
+                    }
+                }
+            }
         }
 
         Ok(())
@@ -153,5 +169,5 @@ pub enum Err {
     RuntimeErr(#[from] RuntimeErr),
 
     #[error("An IO error occured while attempting to read the file.")]
-    IOError(#[from] io::Error)
+    IOError(#[from] io::Error),
 }

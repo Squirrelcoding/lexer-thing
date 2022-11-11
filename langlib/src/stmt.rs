@@ -6,6 +6,7 @@ pub enum Stmt {
     Print(Expr),
     ExprStatement(Expr),
     Block(Vec<Stmt>),
+    IfStmt(Expr, Box<Stmt>, Option<Box<Stmt>>),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, thiserror::Error)]

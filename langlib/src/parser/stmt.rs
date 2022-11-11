@@ -1,3 +1,5 @@
+use std::mem::Discriminant;
+
 use crate::{
     expr::Expr,
     lexer::token::{Keyword, Token},
@@ -30,6 +32,7 @@ impl Parser {
                     // If it's an Declaration statement
                     Keyword::Let => self.declaration(),
                     Keyword::Print => self.print(),
+                    Keyword::If => self.if_stmt(),
 
                     _ => Err(ParserError::BadStatement),
                 },
@@ -76,6 +79,7 @@ impl Parser {
     fn print(&mut self) -> Result<Stmt, ParserError> {
         if self.match_rule(&[Token::Keyword(Keyword::Print)]) {
             let expr = self.expr()?;
+
             return Ok(Stmt::Print(expr));
         }
 
@@ -92,11 +96,51 @@ impl Parser {
         while self.curr() != Ok(Token::RightCurly) {
             let stmt = self.stmt()?;
 
-            self.adv();
-
             stmts.push(stmt);
         }
 
+        self.adv();
+
         Ok(Stmt::Block(stmts))
+    }
+
+    /// Attempts to parse an if statement.
+    fn if_stmt(&mut self) -> Result<Stmt, ParserError> {
+        if !self.match_rule(&[Token::Keyword(Keyword::If), Token::LeftBracket]) {
+            return Err(ParserError::Expected(Token::LeftBracket));
+        }
+
+        let expr = self.expr()?;
+
+        if !self.match_rule(&[Token::RightBracket]) {
+            return Err(ParserError::Expected(Token::RightBracket));
+        }
+
+        // If we execute the block inside then that means we may have reached a line of code that looks like:
+        // if (condition) statement;
+        if self.curr()? != Token::LeftCurly {
+            let stmt = self.stmt()?;
+
+            return Ok(Stmt::IfStmt(expr, Box::new(stmt), None));
+        }
+
+        let block = self.block()?;
+
+        if self.match_rule(&[Token::Keyword(Keyword::Else)]) {
+            let else_block = self.block()?;
+
+
+
+            Ok(Stmt::IfStmt(
+                expr,
+                Box::new(block),
+                Some(Box::new(else_block)),
+            ))
+        } else {
+
+            self.adv();
+
+            Ok(Stmt::IfStmt(expr, Box::new(block), None))
+        }
     }
 }

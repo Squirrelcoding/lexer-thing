@@ -47,6 +47,7 @@ print k;
 
 ## Currently working on
 - Control flow
+- Logical operators
 ## Features
 - Basic unary expressions
 - Boolean, string, and integer literals
