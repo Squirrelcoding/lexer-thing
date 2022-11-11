@@ -1,5 +1,3 @@
-use std::mem::Discriminant;
-
 use crate::{
     expr::Expr,
     lexer::token::{Keyword, Token},
@@ -20,6 +18,7 @@ impl Parser {
             None => return Err(ParserError::Expected(Token::Semi)),
         };
 
+        
         // Tokens of the statement
         let slice = &self.tokens[self.cursor..idx];
 
@@ -54,6 +53,9 @@ impl Parser {
     /// Attempts to parse a declaration statement.
     fn declaration(&mut self) -> Result<Stmt, ParserError> {
         if self.match_rule(&[Token::Keyword(Keyword::Let), Token::Ident("".to_owned())]) {
+
+            println!("CURRRR: {}", self.cursor);
+            
             if self.match_rule(&[Token::DeclarationSign]) {
                 // Get the identier and value
                 let ident = self.at(self.cursor - 2)?.try_into_ident()?;
@@ -62,6 +64,8 @@ impl Parser {
 
                 return Ok(Stmt::Declaration(Declaration { ident, val: expr }));
             }
+
+            println!("CURR: {:?}", self.curr());
 
             let ident = self.prev()?.try_into_ident()?;
 
@@ -89,16 +93,23 @@ impl Parser {
 
     /// Attempts to parse a block.
     fn block(&mut self) -> Result<Stmt, ParserError> {
+
+        // Advance from the "{" token.
         self.adv();
-
+        
         let mut stmts = Vec::new();
-
+        
         while self.curr() != Ok(Token::RightCurly) {
             let stmt = self.stmt()?;
 
-            stmts.push(stmt);
-        }
+            println!("STMT: {stmt:?}");
 
+            stmts.push(stmt);
+
+            println!("CURR: {:?}", self.curr());
+        }
+        
+        // Advance from the "}" token.
         self.adv();
 
         Ok(Stmt::Block(stmts))
@@ -126,11 +137,10 @@ impl Parser {
 
         let block = self.block()?;
 
+        println!("CURR AFTER BLOCK: {:?}", self.curr());
+
         if self.match_rule(&[Token::Keyword(Keyword::Else)]) {
             let else_block = self.block()?;
-
-
-
             Ok(Stmt::IfStmt(
                 expr,
                 Box::new(block),

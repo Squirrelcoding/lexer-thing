@@ -52,7 +52,6 @@ mod parser_tests {
             Token::Ident("x".to_owned()),
             Token::DeclarationSign,
             Token::Int(5),
-            Token::Semi,
         ];
 
         assert!(parser.match_rule(&rules));
