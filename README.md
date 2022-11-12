@@ -21,7 +21,7 @@ if (stringA == stringB) {
     {
         {
             {
-                if (true) {
+                if ((true or false) and true) {
                     print "You can nest statements!";
                 }
             }
@@ -31,12 +31,10 @@ if (stringA == stringB) {
     print "Some simple arithmetic with a and b:";
     print (a * 2) + b; 
 }
-
 ```
 
 ## Currently working on
-- Control flow
-- Logical operators
+- Control flow (loops)
 ## Features
 - Basic unary expressions
 - Boolean, string, and integer literals

@@ -11,6 +11,8 @@ pub enum BinOp {
     LessSign,
     GreaterEqSign,
     LessEqSign,
+    And,
+    Or,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

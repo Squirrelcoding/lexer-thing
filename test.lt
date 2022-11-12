@@ -17,7 +17,7 @@ if (stringA == stringB) {
     {
         {
             {
-                if (true) {
+                if ((true or false) and true) {
                     print "You can nest statements!";
                 }
             }

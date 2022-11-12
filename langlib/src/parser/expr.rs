@@ -11,7 +11,41 @@ use super::{err::ParserError, Parser};
 impl Parser {
     /// Attempts to parse an expression.
     pub fn expr(&mut self) -> Result<Expr, ParserError> {
-        self.compare()
+        self.logical_or()
+    }
+
+    /// Attempts to parse a logical `or` expession.
+    pub fn logical_or(&mut self) -> Result<Expr, ParserError> {
+        let mut lhs = self.logical_and()?;
+
+        while let Some(op) = self.matches(&[Token::Op(BinOp::Or)]) {
+            let rhs = self.logical_and()?;
+
+            lhs = Expr::Bin(BinExpr {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+                op: op.try_into_op()?,
+            });
+        }
+
+        Ok(lhs)
+    }
+
+    /// Attempts to parse a logical `and` expession.
+    pub fn logical_and(&mut self) -> Result<Expr, ParserError> {
+        let mut lhs = self.compare()?;
+
+        while let Some(op) = self.matches(&[Token::Op(BinOp::And)]) {
+            let rhs = self.compare()?;
+
+            lhs = Expr::Bin(BinExpr {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+                op: op.try_into_op()?,
+            });
+        }
+
+        Ok(lhs)
     }
 
     /// Attempts to parse a compare expression.
