@@ -4,9 +4,10 @@ use super::expr::Expr;
 pub enum Stmt {
     Declaration(Declaration),
     Print(Expr),
-    ExprStatement(Expr),
+    Expr(Expr),
     Block(Vec<Stmt>),
-    IfStmt(Expr, Box<Stmt>, Option<Box<Stmt>>),
+    If(Expr, Box<Stmt>, Option<Box<Stmt>>),
+    While(Expr, Box<Stmt>),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, thiserror::Error)]

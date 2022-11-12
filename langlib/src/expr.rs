@@ -101,14 +101,14 @@ impl BinExpr {
         Ok((lhs, rhs))
     }
 
-        /// Attempts to convert the operands into booleans.
-        fn try_into_bools(&self) -> Result<(bool, bool), ParserError> {
-            let lhs: bool = (*self.lhs.to_owned()).eval()?.try_into()?;
-    
-            let rhs: bool = (*self.rhs.to_owned()).eval()?.try_into()?;
-    
-            Ok((lhs, rhs))
-        }
+    /// Attempts to convert the operands into booleans.
+    fn try_into_bools(&self) -> Result<(bool, bool), ParserError> {
+        let lhs: bool = (*self.lhs.to_owned()).eval()?.try_into()?;
+
+        let rhs: bool = (*self.rhs.to_owned()).eval()?.try_into()?;
+
+        Ok((lhs, rhs))
+    }
 
     /// Evaluates the expression, and consumes itself.
     pub fn eval(self) -> Result<Expr, ParserError> {
@@ -153,16 +153,16 @@ impl BinExpr {
                 let (lhs, rhs) = self.try_into_nums()?;
 
                 Ok(Expr::Bool(lhs <= rhs))
-            },
+            }
             BinOp::And => {
-                let (lhs, rhs) = self.try_into_bools()?;    
+                let (lhs, rhs) = self.try_into_bools()?;
                 Ok(Expr::Bool(lhs && rhs))
-            },
+            }
             BinOp::Or => {
                 let (lhs, rhs) = self.try_into_bools()?;
 
                 Ok(Expr::Bool(lhs || rhs))
-            },
+            }
             BinOp::NeqSign => Ok(Expr::Bool(self.lhs.eval()? != self.rhs.eval()?)),
         }
     }

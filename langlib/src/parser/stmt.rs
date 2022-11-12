@@ -31,6 +31,7 @@ impl Parser {
                     Keyword::Let => self.declaration(),
                     Keyword::Print => self.print(),
                     Keyword::If => self.if_stmt(),
+                    Keyword::While => self.while_stmt(),
 
                     _ => Err(ParserError::BadStatement(self.cursor)),
                 },
@@ -39,7 +40,7 @@ impl Parser {
 
                 // Attempt to parse an expression statement
                 _ => match self.expr() {
-                    Ok(expr) => Ok(Stmt::ExprStatement(expr)),
+                    Ok(expr) => Ok(Stmt::Expr(expr)),
                     Err(err) => Err(err),
                 },
             },
@@ -124,20 +125,34 @@ impl Parser {
         if self.curr()? != Token::LeftCurly {
             let stmt = self.stmt()?;
 
-            return Ok(Stmt::IfStmt(expr, Box::new(stmt), None));
+            return Ok(Stmt::If(expr, Box::new(stmt), None));
         }
 
         let block = self.block()?;
 
         if self.match_rule(&[Token::Keyword(Keyword::Else)]) {
             let else_block = self.block()?;
-            Ok(Stmt::IfStmt(
-                expr,
-                Box::new(block),
-                Some(Box::new(else_block)),
-            ))
+            Ok(Stmt::If(expr, Box::new(block), Some(Box::new(else_block))))
         } else {
-            Ok(Stmt::IfStmt(expr, Box::new(block), None))
+            Ok(Stmt::If(expr, Box::new(block), None))
         }
+    }
+
+    /// Attempts to parse a while loop
+    fn while_stmt(&mut self) -> Result<Stmt, ParserError> {
+
+        if !self.match_rule(&[Token::Keyword(Keyword::While), Token::LeftBracket]) {
+            return Err(ParserError::Expected(Token::LeftBracket, self.cursor));
+        }
+
+        let expr = self.expr()?;
+
+        if !self.match_rule(&[Token::RightBracket]) {
+            return Err(ParserError::Expected(Token::RightBracket, self.cursor));
+        }
+
+        let block = self.block()?;
+
+        Ok(Stmt::While(expr, Box::new(block)))
     }
 }

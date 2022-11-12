@@ -44,4 +44,6 @@ if (stringA == stringB) {
 - Lexical scope
 
 ## TODO
+- Allow redeclaring variables
+- Allow assignment without having to declare a new variable.
 - Theres gonna be a looooooooooootttttttt of refactoring sooner or later.

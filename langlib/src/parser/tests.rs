@@ -340,7 +340,7 @@ mod parser_tests {
 
         assert_eq!(
             ast.unwrap(),
-            Stmt::IfStmt(
+            Stmt::If(
                 Expr::Bin(BinExpr {
                     lhs: Box::new(Expr::Num(2)),
                     rhs: Box::new(Expr::Num(5)),
@@ -371,7 +371,7 @@ mod parser_tests {
 
         assert_eq!(
             ast.unwrap(),
-            Stmt::IfStmt(
+            Stmt::If(
                 Expr::Bin(BinExpr {
                     lhs: Box::new(Expr::Num(2)),
                     rhs: Box::new(Expr::Num(5)),
@@ -399,7 +399,7 @@ mod parser_tests {
 
         assert_eq!(
             ast.unwrap(),
-            Stmt::IfStmt(
+            Stmt::If(
                 Expr::Bin(BinExpr {
                     lhs: Box::new(Expr::Num(2)),
                     rhs: Box::new(Expr::Num(5)),
@@ -456,7 +456,7 @@ mod parser_tests {
         assert_eq!(
             ast.unwrap(),
             [Stmt::Block(vec![Stmt::Block(vec![Stmt::Block(vec![
-                Stmt::IfStmt(
+                Stmt::If(
                     Expr::Bool(true),
                     Box::new(Stmt::Block(vec![Stmt::Print(Expr::Str(
                         "You can nest statements!".to_owned()
@@ -466,6 +466,41 @@ mod parser_tests {
                     ))])))
                 )
             ])])])]
+        );
+    }
+
+    #[test]
+    fn test_while_loop() {
+        let s = "
+        while (5 == 5) {
+            if (true or false) {
+                print \"HERE\";
+            }
+        }
+    ";
+
+        let tokens = Lexer::new(s).tokenize().unwrap();
+
+        let ast = Parser::new(tokens).get_statements();
+
+        assert_eq!(
+            ast.unwrap(),
+            [Stmt::While(
+                Expr::Bin(BinExpr {
+                    lhs: Box::new(Expr::Num(5)),
+                    rhs: Box::new(Expr::Num(5)),
+                    op: BinOp::EqSign
+                }),
+                Box::new(Stmt::Block(vec![Stmt::If(
+                    Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Bool(true)),
+                        rhs: Box::new(Expr::Bool(false)),
+                        op: BinOp::Or
+                    }),
+                    Box::new(Stmt::Block(vec![Stmt::Print(Expr::Str("HERE".to_owned()))])),
+                    None
+                )]))
+            )]
         );
     }
 }

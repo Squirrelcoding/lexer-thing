@@ -103,7 +103,7 @@ impl Interpreter {
 
                 println!("{result}");
             }
-            Stmt::ExprStatement(expr) => {
+            Stmt::Expr(expr) => {
                 println!("{expr}");
             }
             Stmt::Block(stmts) => {
@@ -120,7 +120,7 @@ impl Interpreter {
 
                 *self.env.borrow_mut() = prev;
             }
-            Stmt::IfStmt(expr, block, else_block) => {
+            Stmt::If(expr, block, else_block) => {
                 let result = match self.visit_expr(expr.to_owned())? {
                     Expr::Bool(b) => b,
                     expr => return Err(Err::RuntimeErr(RuntimeErr::InvalidExpr(expr))),
@@ -134,6 +134,7 @@ impl Interpreter {
                     }
                 }
             }
+            _ => todo!(),
         }
 
         Ok(())

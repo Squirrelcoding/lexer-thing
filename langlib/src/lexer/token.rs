@@ -91,6 +91,8 @@ pub enum Keyword {
     If,
     Else,
     Print,
+    While,
+    For,
 }
 
 #[cfg(test)]
