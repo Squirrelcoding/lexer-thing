@@ -101,6 +101,7 @@ impl Interpreter {
             Stmt::Print(exprr) => {
                 let result = self.visit_expr(exprr.to_owned())?.eval()?;
 
+                println!("{result}");
             }
             Stmt::ExprStatement(expr) => {
                 println!("{expr}");
@@ -133,25 +134,6 @@ impl Interpreter {
                     }
                 }
             }
-        }
-
-        Ok(())
-    }
-
-    pub fn repl() -> Result<(), Err> {
-        loop {
-            let mut input_string = String::new();
-
-            if input_string == "EXIT" {
-                break;
-            }
-            io::stdin().read_line(&mut input_string).unwrap(); // Get the stdin from the user, and put it in read_string
-
-            let result = Parser::new(Lexer::new(&input_string).tokenize()?)
-                .expr()?
-                .eval()?;
-
-            println!("{result}");
         }
 
         Ok(())

@@ -2,46 +2,35 @@
 
 A little toy language that I'm currently working on by following [*Crafting Interpreters*](https://craftinginterpreters.com/), but its written in Rust. So far it can only interpret basic expressions and statements. It's called "lexer-thing" because it was originally supposed to be a lexer. But then I wanted to turn the project into a language. So far the following code is valid:
 ```
-let a = 250;
-let b = 2;
+let stringA = "This is a nice string.";
+let stringB = "This is not a nice string.";
+if (stringA == stringB) {
+    print "This shouldn't print but it's here anyway.";
+} else {
+    print "The two strings are not equal!";
 
-print "This progam can do some math:";
-print ((a*b) * 2) - 500;
+    let a = 324;
+    let b = 32;
 
-let x = "This is a cool string.";
-let y = "This is another cool string.";
+    {
+        let x = !true;
+        let y = false;
+        if (x == y) print "x and y are equal.";
+    }
 
-print "The two strings are not equal:";
-print x == y;
-
-let c = !(!true == false);
-let d = false;
-print "But c and d are:";
-print c == d;
-
-let i = 2;
-let j = "hello";
-{
-    let i = 15;
-    let k = false;
-    print i;
-    print j;
     {
         {
             {
-                {
-                    print "x is different when it's in a small block:";
-                    let x = true;
-                    print x;
+                if (true) {
+                    print "You can nest statements!";
                 }
             }
         }
     }
-}
 
-print i;
-print "Since k doesn't exist up here, the program crashes here!";
-print k;
+    print "Some simple arithmetic with a and b:";
+    print (a * 2) + b; 
+}
 
 ```
 

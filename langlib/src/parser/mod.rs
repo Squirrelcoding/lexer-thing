@@ -26,7 +26,6 @@ impl Parser {
 
         stmt_vec.push(stmt);
 
-
         while !self.is_at_end() {
             let stmt = self.stmt()?;
 
@@ -63,13 +62,11 @@ impl Parser {
 
     /// Attempts to match against a rule and advances if the match is successful.
     fn match_rule(&mut self, rules: &[Token]) -> bool {
-
         // Check if the current cursor is a `let` keyword.
         let old_pos = self.cursor;
 
         // Try to match against a rule and advance if successful
         let is_ok = rules.iter().all(|token| {
-
             if self.is_at_end() {
                 return false;
             }
@@ -116,10 +113,9 @@ impl Parser {
     pub fn adv(&mut self) {
         self.cursor += 1;
 
-        if self.curr() == Ok(Token::Semi) {
+        if self.curr() == Ok(Token::Semi) && !self.is_at_end() {
             self.cursor += 1;
         }
-
     }
 
     /// Returns the previous token

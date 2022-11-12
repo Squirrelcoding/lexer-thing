@@ -14,5 +14,16 @@ if (stringA == stringB) {
         if (x == y) print "x and y are equal.";
     }
 
+    {
+        {
+            {
+                if (true) {
+                    print "You can nest statements!";
+                }
+            }
+        }
+    }
+
+    print "Some simple arithmetic with a and b:";
     print (a * 2) + b; 
 }

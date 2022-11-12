@@ -134,13 +134,13 @@ impl Parser {
                 if self.match_rule(&[Token::LeftBracket]) {
                     let expr = self.expr()?;
                     if !self.match_rule(&[Token::RightBracket]) {
-                        return Err(ParserError::Expected(Token::RightBracket));
+                        return Err(ParserError::Expected(Token::RightBracket, self.cursor));
                     }
 
                     return Ok(expr);
                 }
 
-                Err(ParserError::Expected(Token::LeftBracket))
+                Err(ParserError::Expected(Token::LeftBracket, self.cursor))
             }
         }
     }

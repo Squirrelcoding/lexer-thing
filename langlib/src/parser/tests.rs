@@ -37,7 +37,7 @@ mod parser_tests {
             parser.adv();
         });
 
-        assert_eq!(parser.pos(), parser.tokens.len() - 1);
+        assert_eq!(parser.pos(), parser.tokens.len() + 1);
     }
 
     #[test]
@@ -410,6 +410,62 @@ mod parser_tests {
                 ))),
                 None
             )
+        );
+    }
+
+    #[test]
+    fn test_single_nested_stmt() {
+        let s = "
+        {
+            print \"You can nest statements!\";
+        }
+    ";
+
+        let tokens = Lexer::new(s).tokenize().unwrap();
+
+        let ast = Parser::new(tokens).get_statements();
+
+        assert_eq!(
+            ast.unwrap(),
+            vec![Stmt::Block(vec![Stmt::Print(Expr::Str(
+                "You can nest statements!".to_owned()
+            ))])]
+        );
+    }
+
+    #[test]
+    fn test_multiple_nested_if_stmt() {
+        let s = "
+        {
+            {
+                {
+                    if (true) {
+                        print \"You can nest statements!\";
+                    } else {
+                        print \"This won't be reached but it's here anyway!\";
+                    }
+                }
+            }
+        }
+    ";
+
+        let tokens = Lexer::new(s).tokenize().unwrap();
+
+        let ast = Parser::new(tokens).get_statements();
+
+        assert_eq!(
+            ast.unwrap(),
+            [Stmt::Block(vec![Stmt::Block(vec![Stmt::Block(vec![
+                Stmt::IfStmt(
+                    Expr::Bool(true),
+                    Box::new(Stmt::Block(vec![Stmt::Print(Expr::Str(
+                        "You can nest statements!".to_owned()
+                    ))])),
+                    Some(Box::new(Stmt::Block(vec![Stmt::Print(Expr::Str(
+                        "This won't be reached but it's here anyway!".to_owned()
+                    ))])))
+                )
+            ])])])]
         );
     }
 }

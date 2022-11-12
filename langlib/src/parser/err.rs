@@ -10,7 +10,7 @@ use crate::{
 /// Error enum for the `Parser` struct.
 pub enum ParserError {
     #[error("An invalid or incomplete let statement was encountered")]
-    InvalidLetStatement,
+    InvalidLetStatement(usize),
 
     #[error("A token error has occured while parsing")]
     TokenError(#[from] TokenError),
@@ -22,7 +22,7 @@ pub enum ParserError {
     ExprError(#[from] ExprError),
 
     #[error("An incomplete term was encountered while parsing.")]
-    BadTerm,
+    BadTerm(usize),
 
     #[error("A token at an invalid index was tried to be accesed")]
     InvalidTokenIndex(usize),
@@ -31,19 +31,19 @@ pub enum ParserError {
     UnexpectedEOF,
 
     #[error("Expected token \"{0:?}\"")]
-    Expected(Token),
+    Expected(Token, usize),
 
     #[error("Expected expression")]
-    ExpectedExpr,
+    ExpectedExpr(usize),
 
     #[error("Failed to parse statement")]
-    BadStatement,
+    BadStatement(usize),
 
     #[error("An internal error within the parser occured.")]
-    EmptyMatch,
+    EmptyMatch(usize),
 
     #[error("An invalid comparision was attempted to be made.")]
-    InvalidComparision,
+    InvalidComparision(usize),
 
     #[error("An unexpected token was found.")]
     UnexpectedToken(Token),
