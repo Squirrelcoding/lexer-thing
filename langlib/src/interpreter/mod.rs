@@ -101,7 +101,6 @@ impl Interpreter {
             Stmt::Print(exprr) => {
                 let result = self.visit_expr(exprr.to_owned())?.eval()?;
 
-                println!("{}", result);
             }
             Stmt::ExprStatement(expr) => {
                 println!("{expr}");

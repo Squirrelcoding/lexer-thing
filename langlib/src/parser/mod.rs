@@ -26,6 +26,7 @@ impl Parser {
 
         stmt_vec.push(stmt);
 
+
         while !self.is_at_end() {
             let stmt = self.stmt()?;
 
@@ -62,15 +63,16 @@ impl Parser {
 
     /// Attempts to match against a rule and advances if the match is successful.
     fn match_rule(&mut self, rules: &[Token]) -> bool {
-        if self.is_at_end() {
-            return false;
-        }
 
         // Check if the current cursor is a `let` keyword.
         let old_pos = self.cursor;
 
         // Try to match against a rule and advance if successful
         let is_ok = rules.iter().all(|token| {
+
+            if self.is_at_end() {
+                return false;
+            }
 
             // We use a _ here because we dont care about the actual number itself
             // Check if an int token is the current rule
@@ -87,8 +89,6 @@ impl Parser {
                 self.adv();
                 return true;
             }
-
-
 
             // Match the rest of the tokens
             if &self.tokens[self.cursor] == token {
