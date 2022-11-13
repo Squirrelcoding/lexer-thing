@@ -96,7 +96,7 @@ mod parser_tests {
 
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
-        let result = parser.compare();
+        let result = parser.equality();
         assert!(result.is_ok());
 
         let result = result.unwrap();
@@ -111,7 +111,7 @@ mod parser_tests {
 
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
-        let result = parser.compare();
+        let result = parser.equality();
 
         assert!(result.is_ok());
 
@@ -129,7 +129,7 @@ mod parser_tests {
 
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
-        let result = parser.compare();
+        let result = parser.equality();
         assert!(result.is_ok());
 
         let result = result.unwrap().eval();
@@ -151,7 +151,7 @@ mod parser_tests {
 
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
-        let result = parser.compare();
+        let result = parser.equality();
         assert!(result.is_ok());
 
         let result = result.unwrap().eval();
@@ -169,7 +169,7 @@ mod parser_tests {
 
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
-        let result = parser.compare();
+        let result = parser.equality();
         assert!(result.is_ok());
 
         let result = result.unwrap().eval();
@@ -188,7 +188,7 @@ mod parser_tests {
 
         let mut parser = Parser::new(lexer.tokenize().unwrap());
 
-        let result = parser.compare();
+        let result = parser.equality();
         assert!(result.is_ok());
 
         let result = result.unwrap().eval();

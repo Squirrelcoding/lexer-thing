@@ -37,6 +37,7 @@ impl Parser {
                 },
 
                 Token::LeftCurly => self.block(),
+                Token::Ident(_) => self.assignment(),
 
                 // Attempt to parse an expression statement
                 _ => match self.expr() {
@@ -52,11 +53,13 @@ impl Parser {
 
     /// Attempts to parse a declaration statement.
     fn declaration(&mut self) -> Result<Stmt, ParserError> {
+
+        
         if self.match_rule(&[Token::Keyword(Keyword::Let), Token::Ident("".to_owned())]) {
             if self.match_rule(&[Token::DeclarationSign]) {
                 // Get the identier and value
                 let ident = self.at(self.cursor - 2)?.try_into_ident()?;
-
+                
                 let expr = self.expr()?;
 
                 return Ok(Stmt::Declaration(Declaration { ident, val: expr }));
@@ -79,6 +82,7 @@ impl Parser {
 
     /// Attempts to parse a print statement.
     fn print(&mut self) -> Result<Stmt, ParserError> {
+        
         if self.match_rule(&[Token::Keyword(Keyword::Print)]) {
             let expr = self.expr()?;
 
@@ -140,7 +144,6 @@ impl Parser {
 
     /// Attempts to parse a while loop
     fn while_stmt(&mut self) -> Result<Stmt, ParserError> {
-
         if !self.match_rule(&[Token::Keyword(Keyword::While), Token::LeftBracket]) {
             return Err(ParserError::Expected(Token::LeftBracket, self.cursor));
         }
@@ -154,5 +157,28 @@ impl Parser {
         let block = self.block()?;
 
         Ok(Stmt::While(expr, Box::new(block)))
+    }
+
+    /// Attempts to parse an assignment.
+    fn assignment(&mut self) -> Result<Stmt, ParserError> {
+
+        if self.match_rule(&[Token::Ident("".to_owned())]) {
+            let ident = self.prev()?;
+
+            if self.match_rule(&[Token::DeclarationSign]) {
+                let expr = self.expr()?;
+
+                return Ok(Stmt::Assignment(Declaration {
+                    ident: ident.try_into_ident()?,
+                    val: expr,
+                }));
+            }
+            return Err(ParserError::Expected(Token::DeclarationSign, self.cursor));
+        }
+
+        Err(ParserError::Expected(
+            Token::Ident("".to_owned()),
+            self.cursor,
+        ))
     }
 }

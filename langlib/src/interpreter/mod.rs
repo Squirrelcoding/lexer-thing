@@ -49,6 +49,7 @@ impl Interpreter {
 
     /// Visits an expression and executes it.
     fn visit_expr(&self, expr: Expr) -> Result<Expr, Err> {
+
         match expr {
             Expr::Var(var) => match self.env.borrow().get(&var) {
                 Ok(val) => Ok(val.to_owned()),
@@ -88,14 +89,12 @@ impl Interpreter {
     /// Interprets the instructions
     pub fn execute_stmt(&self, stmt: &Stmt) -> Result<(), Err> {
         match stmt {
-            Stmt::Declaration(declaration) => {
-                if let Err(err) = self
-                    .env
-                    .borrow_mut()
-                    .define(declaration.ident.to_owned(), declaration.val.to_owned())
-                {
-                    return Err(Err::RuntimeErr(err));
-                }
+            Stmt::Declaration(declaration) | Stmt::Assignment(declaration) => {
+
+                let expr = self.visit_expr(declaration.val.to_owned())?;
+
+                self.env.borrow_mut().define(declaration.ident.to_owned(), expr)?;
+
             }
 
             Stmt::Print(exprr) => {
@@ -118,7 +117,9 @@ impl Interpreter {
                     self.execute_stmt(block_stmt)?;
                 }
 
-                *self.env.borrow_mut() = prev;
+                let new_parent = self.env.borrow().get_parent().unwrap();
+
+                *self.env.borrow_mut() = new_parent;
             }
             Stmt::If(expr, block, else_block) => {
                 let result = match self.visit_expr(expr.to_owned())? {
@@ -133,8 +134,12 @@ impl Interpreter {
                         self.execute_stmt(else_block)?;
                     }
                 }
-            }
-            _ => todo!(),
+            },
+            Stmt::While(condition, block) => {
+                while self.visit_expr(condition.to_owned())?.try_into()? {
+                    self.execute_stmt(&block)?;
+                }
+            },
         }
 
         Ok(())

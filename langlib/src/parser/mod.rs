@@ -1,5 +1,6 @@
 pub mod err;
 mod expr;
+mod expr_tests;
 mod stmt;
 mod tests;
 
@@ -20,6 +21,7 @@ impl Parser {
     }
 
     pub fn get_statements(&mut self) -> Result<Vec<Stmt>, ParserError> {
+
         let mut stmt_vec = Vec::new();
 
         let stmt = self.stmt()?;

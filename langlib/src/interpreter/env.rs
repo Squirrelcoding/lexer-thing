@@ -34,10 +34,12 @@ impl Env {
     /// Defines a new variable and stores it in the environment.
     pub fn define(&mut self, k: String, v: Expr) -> Result<(), RuntimeErr> {
         if self.parent.is_some() {
+
             self.parent
                 .as_mut()
                 .unwrap()
                 .define(k.to_owned(), v.to_owned())?;
+            return Ok(());
         }
 
         self.vals.insert(k, v);
@@ -45,8 +47,30 @@ impl Env {
         Ok(())
     }
 
+    /// Defines a new variable and stores it in the environment.
+    // pub fn reassign(&mut self, k: String, v: Expr) -> Result<(), RuntimeErr> {
+    //     if self.parent.is_some() {
+    //         self.parent
+    //             .as_mut()
+    //             .unwrap()
+    //             .define(k.to_owned(), v.to_owned())?;
+    //     }
+
+    //     self.vals.insert(k, v);
+
+    //     Ok(())
+    // }
+
     /// Sets the parent of the environment.
     pub fn set_parent(&mut self, parent: &Env) {
         self.parent = Some(Box::new(parent.clone()));
+    }
+
+    /// Gets the parent of the environment.
+    pub fn get_parent(&self) -> Option<Env> {
+        match &self.parent {
+            Some(parent) => Some(parent.as_ref().to_owned()),
+            None => None,
+        }
     }
 }
