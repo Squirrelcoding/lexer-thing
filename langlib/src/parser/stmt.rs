@@ -1,10 +1,9 @@
+use super::{err::ParserError, Parser};
 use crate::{
     expr::Expr,
     lexer::token::{Keyword, Token},
     stmt::{Declaration, Stmt},
 };
-
-use super::{err::ParserError, Parser};
 
 impl Parser {
     /// Attempts to parse a statement from the next tokens until it encounters a semicolon.
@@ -32,6 +31,7 @@ impl Parser {
                     Keyword::Print => self.print(),
                     Keyword::If => self.if_stmt(),
                     Keyword::While => self.while_stmt(),
+                    Keyword::For => self.for_stmt(),
 
                     _ => Err(ParserError::BadStatement(self.cursor)),
                 },
@@ -53,13 +53,11 @@ impl Parser {
 
     /// Attempts to parse a declaration statement.
     fn declaration(&mut self) -> Result<Stmt, ParserError> {
-
-        
         if self.match_rule(&[Token::Keyword(Keyword::Let), Token::Ident(String::from(""))]) {
             if self.match_rule(&[Token::DeclarationSign]) {
                 // Get the identier and value
                 let ident = self.at(self.cursor - 2)?.try_into_ident()?;
-                
+
                 let expr = self.expr()?;
 
                 return Ok(Stmt::Declaration(Declaration { ident, val: expr }));
@@ -82,7 +80,6 @@ impl Parser {
 
     /// Attempts to parse a print statement.
     fn print(&mut self) -> Result<Stmt, ParserError> {
-        
         if self.match_rule(&[Token::Keyword(Keyword::Print)]) {
             let expr = self.expr()?;
 
@@ -161,7 +158,6 @@ impl Parser {
 
     /// Attempts to parse an assignment.
     fn assignment(&mut self) -> Result<Stmt, ParserError> {
-
         if self.match_rule(&[Token::Ident(String::from(""))]) {
             let ident = self.prev()?;
 
@@ -180,5 +176,38 @@ impl Parser {
             Token::Ident(String::from("")),
             self.cursor,
         ))
+    }
+
+    /// Attempt to parse a for loop, by parsing it into a while loop.
+    fn for_stmt(&mut self) -> Result<Stmt, ParserError> {
+        if !self.match_rule(&[Token::Keyword(Keyword::For), Token::LeftBracket]) {
+            return Err(ParserError::Expected(
+                Token::Keyword(Keyword::For),
+                self.cursor,
+            ));
+        }
+
+        let initializer = self.stmt()?;
+
+        println!("Initializer: {initializer:?}");
+
+        let condition = self.expr()?;
+        let increment = self.stmt()?;
+
+        if !self.match_rule(&[Token::RightBracket]) {
+            return Err(ParserError::Expected(Token::RightBracket, self.cursor));
+        }
+
+        let mut stmts = match self.block()? {
+            Stmt::Block(stmts) => stmts,
+            _ => todo!(),
+        };
+
+        stmts.push(increment);
+
+        Ok(Stmt::Block(vec![
+            initializer,
+            Stmt::While(condition, Box::new(Stmt::Block(stmts))),
+        ]))
     }
 }

@@ -134,7 +134,6 @@ impl Parser {
     /// Attempts to parse a "primary". A primary is a type similiar to a literal, however a primary can include things
     /// such as expressions wrapped in parent or an identifier.
     pub fn primary(&mut self) -> Result<Expr, ParserError> {
-
         match self.curr()? {
             Token::Int(int) => {
                 self.adv();

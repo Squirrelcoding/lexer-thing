@@ -1,8 +1,21 @@
-use std::path::Path;
-
-use langlib::interpreter::Interpreter;
+use langlib::{interpreter::Interpreter, lexer::Lexer, parser::Parser};
 
 fn main() -> Result<(), langlib::interpreter::Err> {
-    Interpreter::from_file(Path::new("test.lt"))?.interpret()?;
+    let s = "
+    for (let i = 0; i < 5; i = i + 1) {
+        print i;
+    }
+    
+    print \"i = \";
+    print i;
+    ";
+    let tokens = Lexer::new(s).tokenize()?;
+
+
+    let ast = Parser::new(tokens).get_statements()?;
+
+    println!("{ast:?}");
+
+    Interpreter::new(ast).interpret()?;
     Ok(())
 }

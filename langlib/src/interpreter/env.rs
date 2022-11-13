@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-// use ahash::AHashMap;
-
 use crate::expr::Expr;
 
 use super::err::RuntimeErr;
@@ -36,11 +34,7 @@ impl Env {
     /// Defines a new variable and stores it in the environment.
     pub fn define(&mut self, k: String, v: Expr) -> Result<(), RuntimeErr> {
         if self.parent.is_some() {
-
-            self.parent
-                .as_mut()
-                .unwrap()
-                .define(k, v)?;
+            self.parent.as_mut().unwrap().define(k, v)?;
             return Ok(());
         }
 
@@ -48,7 +42,7 @@ impl Env {
 
         Ok(())
     }
-    
+
     /// Sets the parent of the environment.
     pub fn set_parent(&mut self, parent: &Env) {
         self.parent = Some(Box::new(parent.clone()));
@@ -56,9 +50,8 @@ impl Env {
 
     /// Gets the parent of the environment.
     pub fn get_parent(&self) -> Option<Env> {
-        match &self.parent {
-            Some(parent) => Some(parent.as_ref().to_owned()),
-            None => None,
-        }
+        self.parent
+            .as_ref()
+            .map(|parent| parent.as_ref().to_owned())
     }
 }

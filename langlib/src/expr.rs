@@ -73,7 +73,7 @@ impl TryInto<bool> for Expr {
         match self {
             Expr::Bool(bool) => Ok(bool),
             Expr::Num(num) => Ok(num > 0),
-            Expr::Str(s) => Ok(s.len() > 0),
+            Expr::Str(s) => Ok(!s.is_empty()),
             Expr::Null => Ok(false),
             _ => Err(ParserError::ExprError(ExprError::FailedConversion)),
         }

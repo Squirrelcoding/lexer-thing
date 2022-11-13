@@ -153,7 +153,7 @@ impl<'a> Lexer<'a> {
             "if" => Token::Keyword(Keyword::If),
             "else" => Token::Keyword(Keyword::Else),
             "while" => Token::Keyword(Keyword::While),
-            "loop" => Token::Keyword(Keyword::For),
+            "for" => Token::Keyword(Keyword::For),
             "and" => Token::Op(BinOp::And),
             "or" => Token::Op(BinOp::Or),
             s => Token::Ident(s.to_owned()),
