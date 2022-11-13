@@ -21,7 +21,7 @@ pub enum Expr {
 impl Expr {
     pub fn eval(&self) -> Result<Expr, ParserError> {
         match self {
-            Expr::Bin(expr) => expr.to_owned().eval(),
+            Expr::Bin(expr) => expr.eval(),
 
             Expr::Unary(op, expr) => {
                 if mem::discriminant(&Expr::Bool(false)) != mem::discriminant(&expr.eval()?) {
@@ -94,24 +94,24 @@ impl BinExpr {
 
     /// Attempts to convert the operands into numbers.
     fn try_into_nums(&self) -> Result<(i32, i32), ParserError> {
-        let lhs: i32 = (*self.lhs.to_owned()).eval()?.try_into()?;
+        let lhs: i32 = (*self.lhs).eval()?.try_into()?;
 
-        let rhs: i32 = (*self.rhs.to_owned()).eval()?.try_into()?;
+        let rhs: i32 = (*self.rhs).eval()?.try_into()?;
 
         Ok((lhs, rhs))
     }
 
     /// Attempts to convert the operands into booleans.
     fn try_into_bools(&self) -> Result<(bool, bool), ParserError> {
-        let lhs: bool = (*self.lhs.to_owned()).eval()?.try_into()?;
+        let lhs: bool = (*self.lhs).eval()?.try_into()?;
 
-        let rhs: bool = (*self.rhs.to_owned()).eval()?.try_into()?;
+        let rhs: bool = (*self.rhs).eval()?.try_into()?;
 
         Ok((lhs, rhs))
     }
 
     /// Evaluates the expression, and consumes itself.
-    pub fn eval(self) -> Result<Expr, ParserError> {
+    pub fn eval(&self) -> Result<Expr, ParserError> {
         match self.op {
             BinOp::Add => {
                 let (lhs, rhs) = self.try_into_nums()?;

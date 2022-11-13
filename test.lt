@@ -1,5 +1,34 @@
-let x = 0;
-while (x < 5) {
-    print x;
-    x = x + 1;
+let stringA = "This is a nice string.";
+let stringB = "This is not a nice string.";
+if (stringA == stringB) {
+    print "This shouldn't print but it's here anyway.";
+} else {
+    print "The two strings are not equal!";
+
+    let a = 324;
+    let b = 32;
+
+    {
+        let x = !true;
+        let y = false;
+        if (x == y) print "x and y are equal.";
+    }
+
+    {
+        {
+            {
+                if ((true or false) and true) {
+                    print "You can nest statements!";
+                    let x = 0;
+                    while (x < 10) {
+                        print "And run loops!";
+                        x = x + 1;
+                    }
+                }
+            }
+        }
+    }
+
+    print "Some simple arithmetic with a and b:";
+    print (a * 2) + b; 
 }

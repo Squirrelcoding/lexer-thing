@@ -134,7 +134,7 @@ impl Parser {
         if self.is_at_end() {
             return Err(ParserError::UnexpectedEOF);
         }
-        Ok(self.tokens[self.cursor].to_owned())
+        Ok(self.tokens[self.cursor].clone())
     }
 
     /// Returns the token at the given index `i`

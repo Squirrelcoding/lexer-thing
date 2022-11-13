@@ -55,7 +55,7 @@ impl Parser {
     fn declaration(&mut self) -> Result<Stmt, ParserError> {
 
         
-        if self.match_rule(&[Token::Keyword(Keyword::Let), Token::Ident("".to_owned())]) {
+        if self.match_rule(&[Token::Keyword(Keyword::Let), Token::Ident(String::from(""))]) {
             if self.match_rule(&[Token::DeclarationSign]) {
                 // Get the identier and value
                 let ident = self.at(self.cursor - 2)?.try_into_ident()?;
@@ -162,7 +162,7 @@ impl Parser {
     /// Attempts to parse an assignment.
     fn assignment(&mut self) -> Result<Stmt, ParserError> {
 
-        if self.match_rule(&[Token::Ident("".to_owned())]) {
+        if self.match_rule(&[Token::Ident(String::from(""))]) {
             let ident = self.prev()?;
 
             if self.match_rule(&[Token::DeclarationSign]) {
@@ -177,7 +177,7 @@ impl Parser {
         }
 
         Err(ParserError::Expected(
-            Token::Ident("".to_owned()),
+            Token::Ident(String::from("")),
             self.cursor,
         ))
     }

@@ -56,9 +56,9 @@ impl Interpreter {
                 Err(err) => Err(Err::RuntimeErr(err)),
             },
             Expr::Bin(bin_expr) => {
-                let lhs = self.visit_expr(bin_expr.lhs.as_ref().to_owned())?;
+                let lhs = self.visit_expr(*bin_expr.lhs)?;
 
-                let rhs = self.visit_expr(bin_expr.rhs.as_ref().to_owned())?;
+                let rhs = self.visit_expr(*bin_expr.rhs)?;
 
                 match Expr::eval(&Expr::Bin(BinExpr {
                     lhs: Box::new(lhs),
@@ -79,7 +79,7 @@ impl Interpreter {
 
     /// Interprets the code
     pub fn interpret(&self) -> Result<(), Err> {
-        for stmt in self.instructions.iter() {
+        for stmt in &self.instructions {
             self.execute_stmt(stmt)?;
         }
 
@@ -137,8 +137,9 @@ impl Interpreter {
             },
             Stmt::While(condition, block) => {
                 while self.visit_expr(condition.to_owned())?.try_into()? {
-                    self.execute_stmt(&block)?;
+                    self.execute_stmt(block)?;
                 }
+
             },
         }
 

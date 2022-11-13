@@ -23,6 +23,11 @@ if (stringA == stringB) {
             {
                 if ((true or false) and true) {
                     print "You can nest statements!";
+                    let x = 0;
+                    while (x < 10) {
+                        print "And run loops!";
+                        x = x + 1;
+                    }
                 }
             }
         }
