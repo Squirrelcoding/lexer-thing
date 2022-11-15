@@ -37,7 +37,13 @@ impl Parser {
                 },
 
                 Token::LeftCurly => self.block(),
-                Token::Ident(_) => self.assignment(),
+                Token::Ident(_) => {
+                    if self.at(self.cursor + 1)? != Token::LeftBracket {
+                        self.assignment()
+                    } else {
+                        Ok(Stmt::Expr(self.expr()?))
+                    }
+                }
 
                 // Attempt to parse an expression statement
                 _ => match self.expr() {

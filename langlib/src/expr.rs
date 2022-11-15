@@ -15,6 +15,7 @@ pub enum Expr {
     Bool(bool),
     Bin(BinExpr),
     Unary(UnOp, Box<Expr>),
+    Funcall(Box<Expr>, Vec<Expr>),
     Null,
 }
 

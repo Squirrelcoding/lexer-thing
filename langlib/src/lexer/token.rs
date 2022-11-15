@@ -12,6 +12,7 @@ pub enum Token {
     EqSign,
     Int(i32),
     Semi,
+    Comma,
     String(String),
     LeftBracket,
     RightBracket,

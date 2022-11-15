@@ -21,7 +21,7 @@ impl<'a> Lexer<'a> {
         Self { input, position: 0 }
     }
 
-    /// Tokenizes a string`
+    /// Tokenizes a string
     pub fn tokenize(&mut self) -> Result<Vec<Token>, LexerError> {
         let mut vec = Vec::new();
 
@@ -82,6 +82,7 @@ impl<'a> Lexer<'a> {
             '{' => Ok((Token::LeftCurly, 1)),
             '}' => Ok((Token::RightCurly, 1)),
             ';' => Ok((Token::Semi, 1)),
+            ',' => Ok((Token::Comma, 1)),
             '!' => {
                 if Some('=') == data.chars().nth(1) {
                     Ok((Token::Op(BinOp::NeqSign), 2))

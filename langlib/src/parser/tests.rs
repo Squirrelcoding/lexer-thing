@@ -503,4 +503,88 @@ mod parser_tests {
             )]
         );
     }
+
+    #[test]
+    fn test_simple_function_call() {
+        let s = "someFunction();";
+        let tokens = Lexer::new(s).tokenize().unwrap();
+        let ast = Parser::new(tokens).expr();
+
+        assert_eq!(
+            ast.unwrap(),
+            Expr::Funcall(Box::new(Expr::Var("someFunction".to_owned())), vec![])
+        );
+    }
+
+    #[test]
+    fn test_function_call_with_args() {
+        let s = "someFunction((123456789 * 2) / 3, \"A very cool string\", !true, a * 2);";
+        let tokens = Lexer::new(s).tokenize().unwrap();
+        let ast = Parser::new(tokens).expr();
+
+        assert_eq!(
+            ast.unwrap(),
+            Expr::Funcall(
+                Box::new(Expr::Var("someFunction".to_owned())),
+                vec![
+                    Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Bin(BinExpr {
+                            lhs: Box::new(Expr::Num(123456789)),
+                            rhs: Box::new(Expr::Num(2)),
+                            op: BinOp::Mul
+                        })),
+                        rhs: Box::new(Expr::Num(3)),
+                        op: BinOp::Div
+                    }),
+                    Expr::Str("A very cool string".to_owned()),
+                    Expr::Unary(UnOp::Bang, Box::new(Expr::Bool(true))),
+                    Expr::Bin(BinExpr {
+                        lhs: Box::new(Expr::Var("a".to_owned())),
+                        rhs: Box::new(Expr::Num(2)),
+                        op: BinOp::Mul
+                    })
+                ]
+            )
+        );
+    }
+
+    #[test]
+    fn test_crazy_function_call() {
+        let s = "someFunction((123456789 * 2) / 3, \"A very cool string\", !true, a * 2)(32, 65, 21)(a, b, c);";
+
+        let tokens = Lexer::new(s).tokenize().unwrap();
+
+        let expr = Parser::new(tokens).expr();
+
+        assert_eq!(
+            expr.unwrap(),
+            Expr::Funcall(
+                Box::new(Expr::Funcall(
+                    Box::new(Expr::Funcall(
+                        Box::new(Expr::Var("someFunction".to_string())),
+                        vec![
+                            Expr::Bin(BinExpr {
+                                lhs: Box::new(Expr::Bin(BinExpr {
+                                    lhs: Box::new(Expr::Num(123456789)),
+                                    rhs: Box::new(Expr::Num(2)),
+                                    op: BinOp::Mul
+                                })),
+                                rhs: Box::new(Expr::Num(3)),
+                                op: BinOp::Div
+                            }),
+                            Expr::Str("A very cool string".to_owned()),
+                            Expr::Unary(UnOp::Bang, Box::new(Expr::Bool(true))),
+                            Expr::Bin(BinExpr {
+                                lhs: Box::new(Expr::Var("a".to_string())),
+                                rhs: Box::new(Expr::Num(2)),
+                                op: BinOp::Mul
+                            })
+                        ]
+                    )),
+                    vec![Expr::Num(32), Expr::Num(65), Expr::Num(21)]
+                )),
+                vec![Expr::Var("a".to_owned()), Expr::Var("b".to_owned()), Expr::Var("c".to_owned())]
+            )
+        );
+    }
 }

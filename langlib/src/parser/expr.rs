@@ -128,7 +128,43 @@ impl Parser {
             return Ok(Expr::Unary(UnOp::Bang, Box::new(expr)));
         }
 
-        self.primary()
+        self.funcall()
+    }
+
+    /// Attempts to parse a function call.
+    pub fn funcall(&mut self) -> Result<Expr, ParserError> {
+        let mut expr = self.primary()?;
+        
+        loop {
+            if self.match_rule(&[Token::LeftBracket]) {
+                expr = self.parse_args(expr)?;
+            } else {
+                break;
+            }
+        }
+
+        Ok(expr)
+    }
+
+
+    fn parse_args(&mut self, callee: Expr) -> Result<Expr, ParserError> {
+
+        let mut args: Vec<Expr> = Vec::new();
+
+        if self.curr()? != Token::RightBracket {
+            loop {
+
+                args.push(self.expr()?);
+    
+                if !(self.match_rule(&[Token::Comma])) {
+                    break;
+                }
+            }
+        }
+
+        self.adv();
+
+        Ok(Expr::Funcall(Box::new(callee), args))
     }
 
     /// Attempts to parse a "primary". A primary is a type similiar to a literal, however a primary can include things

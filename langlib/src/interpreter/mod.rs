@@ -50,7 +50,7 @@ impl Interpreter {
     /// Visits an expression and executes it.
     fn visit_expr(&self, expr: &Expr) -> Result<Expr, Err> {
         match expr {
-            Expr::Var(var) => match self.env.borrow().get(&var) {
+            Expr::Var(var) => match self.env.borrow().get(var) {
                 Ok(val) => Ok(val),
                 Err(err) => Err(Err::RuntimeErr(err)),
             },
@@ -123,7 +123,7 @@ impl Interpreter {
                 self.env.replace(parent);
             }
             Stmt::If(expr, block, else_block) => {
-                let result = match self.visit_expr(&expr)? {
+                let result = match self.visit_expr(expr)? {
                     Expr::Bool(b) => b,
                     expr => return Err(Err::RuntimeErr(RuntimeErr::InvalidExpr(expr))),
                 };
