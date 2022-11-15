@@ -162,6 +162,10 @@ impl Parser {
             }
         }
 
+        if args.len() >= 254 {
+            return Err(ParserError::TooManyArgs(self.cursor));
+        }
+
         self.adv();
 
         Ok(Expr::Funcall(Box::new(callee), args))

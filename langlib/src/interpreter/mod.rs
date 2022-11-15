@@ -48,7 +48,7 @@ impl Interpreter {
     }
 
     /// Visits an expression and executes it.
-    fn visit_expr(&self, expr: &Expr) -> Result<Expr, Err> {
+    fn  visit_expr(&self, expr: &Expr) -> Result<Expr, Err> {
         match expr {
             Expr::Var(var) => match self.env.borrow().get(var) {
                 Ok(val) => Ok(val),
@@ -72,6 +72,18 @@ impl Interpreter {
                 Ok(val) => Ok(val),
                 Err(err) => Err(Err::ParserError(err)),
             },
+
+            Expr::Funcall(callee, args) => {
+
+                println!("{callee:?}");
+
+                let args: Vec<Expr> = args.iter().map(|expr| self.visit_expr(expr)).try_collect()?;
+
+                println!("ARGSSSSSSSSSSS: {args:?}");
+
+                todo!()
+            }
+
             _ => Ok(expr.clone()),
         }
     }
@@ -101,8 +113,9 @@ impl Interpreter {
 
                 println!("{result}");
             }
+
             Stmt::Expr(expr) => {
-                println!("{expr}");
+                println!("{}", self.visit_expr(&expr)?);
             }
 
             //TODO!!
