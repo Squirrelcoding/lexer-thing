@@ -25,8 +25,12 @@ if (stringA == stringB) {
                     print "You can nest statements!";
                     let x = 0;
                     while (x < 10) {
-                        print "And run loops!";
+                        print "And run while loops!";
                         x = x + 1;
+                    }
+
+                    for (let i = 0; i <= 10; i = i + 1) {
+                        print "And for loops!";
                     }
                 }
             }
@@ -39,7 +43,7 @@ if (stringA == stringB) {
 ```
 
 ## Currently working on
-- Control flow (loops)
+- Refactoring codebasse
 ## Features
 - Basic unary expressions
 - Boolean, string, and integer literals
@@ -47,8 +51,4 @@ if (stringA == stringB) {
 - Basic variables
 - Comparisions for numbers (e.g `a > b` , `a != b`, etc.)
 - Lexical scope
-
-## TODO
-- Allow redeclaring variables
-- Allow assignment without having to declare a new variable.
-- Theres gonna be a looooooooooootttttttt of refactoring sooner or later.
+- Basic control flow (if statements and loops)
