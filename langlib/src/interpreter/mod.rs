@@ -48,31 +48,31 @@ impl Interpreter {
     }
 
     /// Visits an expression and executes it.
-    fn visit_expr(&self, expr: Expr) -> Result<Expr, Err> {
+    fn visit_expr(&self, expr: &Expr) -> Result<Expr, Err> {
         match expr {
             Expr::Var(var) => match self.env.borrow().get(&var) {
                 Ok(val) => Ok(val),
                 Err(err) => Err(Err::RuntimeErr(err)),
             },
             Expr::Bin(bin_expr) => {
-                let lhs = self.visit_expr(*bin_expr.lhs)?;
+                let lhs = self.visit_expr(&bin_expr.lhs)?;
 
-                let rhs = self.visit_expr(*bin_expr.rhs)?;
+                let rhs = self.visit_expr(&bin_expr.rhs)?;
 
                 match Expr::eval(&Expr::Bin(BinExpr {
                     lhs: Box::new(lhs),
                     rhs: Box::new(rhs),
-                    op: bin_expr.op,
+                    op: bin_expr.op.clone(),
                 })) {
                     Ok(result) => Ok(result),
                     Err(err) => Err(Err::ParserError(err)),
                 }
             }
-            Expr::Unary(op, expr) => match Expr::eval(&Expr::Unary(op, expr)) {
+            Expr::Unary(op, expr) => match Expr::eval(&Expr::Unary(op.clone(), expr.clone())) {
                 Ok(val) => Ok(val),
                 Err(err) => Err(Err::ParserError(err)),
             },
-            _ => Ok(expr),
+            _ => Ok(expr.clone()),
         }
     }
 
@@ -89,7 +89,7 @@ impl Interpreter {
     pub fn execute_stmt(&self, stmt: &Stmt) -> Result<(), Err> {
         match stmt {
             Stmt::Declaration(declaration) => {
-                let expr = self.visit_expr(declaration.val.to_owned())?;
+                let expr = self.visit_expr(&declaration.val)?;
 
                 self.env
                     .borrow_mut()
@@ -97,31 +97,33 @@ impl Interpreter {
             }
 
             Stmt::Print(exprr) => {
-                let result = self.visit_expr(exprr.to_owned())?.eval()?;
+                let result = self.visit_expr(exprr)?.eval()?;
 
                 println!("{result}");
             }
             Stmt::Expr(expr) => {
                 println!("{expr}");
             }
+
+            //TODO!!
             Stmt::Block(stmts) => {
-                let prev = self.env.borrow().to_owned();
+                let prev = self.env.to_owned().into_inner();
 
                 let mut new_env = Env::new();
-                new_env.set_parent(&prev);
+                new_env.set_parent(prev);
 
-                *self.env.borrow_mut() = new_env;
+                self.env.replace(new_env);
 
                 for block_stmt in stmts {
                     self.execute_stmt(block_stmt)?;
                 }
 
-                let parent = self.env.borrow_mut().clone().get_parent().unwrap();
+                let parent = self.env.to_owned().into_inner().get_parent().unwrap();
 
                 self.env.replace(parent);
             }
             Stmt::If(expr, block, else_block) => {
-                let result = match self.visit_expr(expr.to_owned())? {
+                let result = match self.visit_expr(&expr)? {
                     Expr::Bool(b) => b,
                     expr => return Err(Err::RuntimeErr(RuntimeErr::InvalidExpr(expr))),
                 };
@@ -133,12 +135,12 @@ impl Interpreter {
                 }
             }
             Stmt::While(condition, block) => {
-                while self.visit_expr(condition.to_owned())?.try_into()? {
+                while self.visit_expr(condition)?.try_into()? {
                     self.execute_stmt(block)?;
                 }
             }
             Stmt::Assignment(declaration) => {
-                let expr = self.visit_expr(declaration.val.to_owned())?;
+                let expr = self.visit_expr(&declaration.val)?;
 
                 self.env
                     .borrow_mut()

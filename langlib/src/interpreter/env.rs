@@ -51,14 +51,18 @@ impl Env {
     }
 
     /// Sets the parent of the environment.
-    pub fn set_parent(&mut self, parent: &Env) {
-        self.parent = Some(Box::new(RefCell::new(parent.clone())));
+    pub fn set_parent(&mut self, parent: Env) {
+        self.parent = Some(Box::new(RefCell::new(parent)));
     }
 
     /// Gets the parent of the environment.
     pub fn get_parent(self) -> Option<Env> {
-        self.parent
-            .as_ref()
-            .map(|parent| parent.as_ref().to_owned().into_inner())
+        let p = match self.parent {
+            Some(p) => p,
+            None => return None,
+        };
+
+        Some((*p).into_inner())
     }
+    
 }
