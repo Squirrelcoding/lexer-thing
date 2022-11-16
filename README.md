@@ -43,7 +43,7 @@ if (stringA == stringB) {
 ```
 
 ## Currently working on
-- Refactoring codebasse
+- MAJOR restructuring to 
 ## Features
 - Basic unary expressions
 - Boolean, string, and integer literals

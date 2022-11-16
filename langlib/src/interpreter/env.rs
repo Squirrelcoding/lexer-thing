@@ -64,5 +64,10 @@ impl Env {
 
         Some((*p).into_inner())
     }
+
+    /// Deletes a variable from the current environment.
+    pub fn drop(&mut self, k: &str) {
+        self.vals.remove(k);
+    }
     
 }

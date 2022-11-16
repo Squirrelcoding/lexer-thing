@@ -1,4 +1,4 @@
-use super::{err::ParserError, Parser};
+use super::{err::{ParserError}, Parser};
 use crate::{
     expr::Expr,
     lexer::token::{Keyword, Token},
@@ -178,8 +178,8 @@ impl Parser {
             return Err(ParserError::Expected(Token::DeclarationSign, self.cursor));
         }
 
-        Err(ParserError::Expected(
-            Token::Ident(String::from("")),
+        Err(ParserError::UnexpectedToken(
+            self.prev()?,
             self.cursor,
         ))
     }

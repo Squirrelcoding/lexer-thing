@@ -46,8 +46,9 @@ pub enum ParserError {
     InvalidComparision(usize),
 
     #[error("An unexpected token was found.")]
-    UnexpectedToken(Token),
+    UnexpectedToken(Token, usize),
 
     #[error("Only a maximum capacity of 254 arguments is supported.")]
     TooManyArgs(usize),
+
 }

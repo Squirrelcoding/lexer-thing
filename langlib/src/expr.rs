@@ -2,7 +2,7 @@ use std::{fmt::Display, mem};
 
 use colored::Colorize;
 
-use crate::{lexer::op::UnOp, parser::err::ParserError};
+use crate::{lexer::op::UnOp, parser::err::ParserError, func::Func};
 
 use super::lexer::op::BinOp;
 
@@ -16,6 +16,7 @@ pub enum Expr {
     Bin(BinExpr),
     Unary(UnOp, Box<Expr>),
     Funcall(Box<Expr>, Vec<Expr>),
+    Func(Func),
     Null,
 }
 

@@ -162,7 +162,7 @@ impl Parser {
             }
         }
 
-        if args.len() >= 254 {
+        if args.len() > 255 {
             return Err(ParserError::TooManyArgs(self.cursor));
         }
 
@@ -200,7 +200,7 @@ impl Parser {
 
                     Ok(Expr::Bool(false))
                 }
-                _ => Err(ParserError::UnexpectedToken(Token::Keyword(keyword))),
+                _ => Err(ParserError::UnexpectedToken(Token::Keyword(keyword), self.cursor)),
             },
 
             // Attempt to parse an expression wrapped in brackets

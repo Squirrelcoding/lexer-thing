@@ -13,7 +13,7 @@ use crate::{
     expr::{BinExpr, Expr},
     lexer::{err::LexerError, Lexer},
     parser::{err::ParserError, Parser},
-    stmt::Stmt,
+    stmt::Stmt, func::Func,
 };
 
 use self::env::Env;
@@ -75,11 +75,19 @@ impl Interpreter {
 
             Expr::Funcall(callee, args) => {
 
-                println!("{callee:?}");
+                println!("CALLEE: {callee}");
+                let callee = match self.visit_expr(&callee)? {
+                    Expr::Funcall(callee, args) => Expr::Funcall(callee, args),
+                    _ => return Err(Err::RuntimeErr(RuntimeErr::UnexpectedType(err::LexerThingType::Ident)))
+                };
+
+                let func = Func::new(todo!(), todo!(), todo!());
 
                 let args: Vec<Expr> = args.iter().map(|expr| self.visit_expr(expr)).try_collect()?;
 
-                println!("ARGSSSSSSSSSSS: {args:?}");
+                if func.arity() != args.len() {
+                    return Err(Err::RuntimeErr(RuntimeErr::BadArgLength(func.arity(), args.len())));
+                }
 
                 todo!()
             }
@@ -118,7 +126,6 @@ impl Interpreter {
                 println!("{}", self.visit_expr(&expr)?);
             }
 
-            //TODO!!
             Stmt::Block(stmts) => {
                 let prev = self.env.to_owned().into_inner();
 
