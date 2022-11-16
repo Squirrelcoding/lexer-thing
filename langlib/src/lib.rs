@@ -1,3 +1,5 @@
+#![feature(iterator_try_collect)]
+
 pub mod expr;
 pub mod interpreter;
 pub mod lexer;

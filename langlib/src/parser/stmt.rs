@@ -195,8 +195,6 @@ impl Parser {
 
         let initializer = self.stmt()?;
 
-        println!("Initializer: {initializer:?}");
-
         let condition = self.expr()?;
         let increment = self.stmt()?;
 
