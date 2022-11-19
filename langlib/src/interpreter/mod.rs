@@ -1,5 +1,5 @@
-mod env;
-mod err;
+pub mod env;
+pub mod err;
 
 use err::RuntimeErr;
 use std::{
@@ -11,9 +11,10 @@ use std::{
 
 use crate::{
     expr::{BinExpr, Expr},
+    func::Func,
     lexer::{err::LexerError, Lexer},
     parser::{err::ParserError, Parser},
-    stmt::Stmt, func::Func,
+    stmt::Stmt,
 };
 
 use self::env::Env;
@@ -47,55 +48,6 @@ impl Interpreter {
         }
     }
 
-    /// Visits an expression and executes it.
-    fn  visit_expr(&self, expr: &Expr) -> Result<Expr, Err> {
-        match expr {
-            Expr::Var(var) => match self.env.borrow().get(var) {
-                Ok(val) => Ok(val),
-                Err(err) => Err(Err::RuntimeErr(err)),
-            },
-            Expr::Bin(bin_expr) => {
-                let lhs = self.visit_expr(&bin_expr.lhs)?;
-
-                let rhs = self.visit_expr(&bin_expr.rhs)?;
-
-                match Expr::eval(&Expr::Bin(BinExpr {
-                    lhs: Box::new(lhs),
-                    rhs: Box::new(rhs),
-                    op: bin_expr.op.clone(),
-                })) {
-                    Ok(result) => Ok(result),
-                    Err(err) => Err(Err::ParserError(err)),
-                }
-            }
-            Expr::Unary(op, expr) => match Expr::eval(&Expr::Unary(op.clone(), expr.clone())) {
-                Ok(val) => Ok(val),
-                Err(err) => Err(Err::ParserError(err)),
-            },
-
-            Expr::Funcall(callee, args) => {
-
-                println!("CALLEE: {callee}");
-                let callee = match self.visit_expr(&callee)? {
-                    Expr::Funcall(callee, args) => Expr::Funcall(callee, args),
-                    _ => return Err(Err::RuntimeErr(RuntimeErr::UnexpectedType(err::LexerThingType::Ident)))
-                };
-
-                let func = Func::new(todo!(), todo!(), todo!());
-
-                let args: Vec<Expr> = args.iter().map(|expr| self.visit_expr(expr)).try_collect()?;
-
-                if func.arity() != args.len() {
-                    return Err(Err::RuntimeErr(RuntimeErr::BadArgLength(func.arity(), args.len())));
-                }
-
-                todo!()
-            }
-
-            _ => Ok(expr.clone()),
-        }
-    }
-
     /// Interprets the code
     pub fn interpret(&self) -> Result<(), Err> {
         for stmt in &self.instructions {
@@ -123,7 +75,8 @@ impl Interpreter {
             }
 
             Stmt::Expr(expr) => {
-                println!("{}", self.visit_expr(&expr)?);
+                self.visit_expr(&expr)?;
+                // println!("EXPR;{}", self.visit_expr(&expr)?);
             }
 
             Stmt::Block(stmts) => {
@@ -169,6 +122,85 @@ impl Interpreter {
         }
 
         Ok(())
+    }
+
+    /// Visits an expression and executes it.
+    fn visit_expr(&self, expr: &Expr) -> Result<Expr, Err> {
+        match expr {
+            Expr::Var(var) => match self.env.borrow().get(var) {
+                Ok(val) => Ok(val),
+                Err(err) => Err(Err::RuntimeErr(err)),
+            },
+            Expr::Bin(bin_expr) => {
+                let lhs = self.visit_expr(&bin_expr.lhs)?;
+
+                let rhs = self.visit_expr(&bin_expr.rhs)?;
+
+                match Expr::eval(&Expr::Bin(BinExpr {
+                    lhs: Box::new(lhs),
+                    rhs: Box::new(rhs),
+                    op: bin_expr.op.clone(),
+                })) {
+                    Ok(result) => Ok(result),
+                    Err(err) => Err(Err::ParserError(err)),
+                }
+            }
+            Expr::Unary(op, expr) => match Expr::eval(&Expr::Unary(op.clone(), expr.clone())) {
+                Ok(val) => Ok(val),
+                Err(err) => Err(Err::ParserError(err)),
+            },
+
+            Expr::Funcall(callee, args) => {
+
+
+                let func = self.visit_expr(&callee)?;
+
+                let func = match func {
+                    Expr::Func(func) => func,
+                    _ => {
+                        return Err(Err::RuntimeErr(RuntimeErr::UnexpectedType(
+                            err::LexerThingType::Func,
+                        )))
+                    }
+                };
+
+                let args: Vec<Expr> = args
+                    .iter()
+                    .map(|expr| self.visit_expr(expr))
+                    .try_collect()?;
+
+                if func.arity() != args.len() {
+                    return Err(Err::RuntimeErr(RuntimeErr::BadArgLength(
+                        func.arity(),
+                        args.len(),
+                    )));
+                }
+
+                self.exec_func(func, args)?;
+
+                Ok(Expr::Null)
+            }
+
+            _ => Ok(expr.clone()),
+        }
+    }
+
+    pub fn exec_func(&self, func: Func, args: Vec<Expr>) -> Result<Expr, Err> {
+        // Bring all the variables into scope.
+        for i in 0..args.len() {
+            self.env
+                .borrow_mut()
+                .define(func.args[i].clone(), args[i].to_owned());
+        }
+
+        self.execute_stmt(&func.instructions)?;
+
+        Ok(Expr::Null)
+    }
+
+    // Helper functions for other structs
+    pub fn define_var(&self, k: String, v: Expr) {
+        self.env.borrow_mut().define(k, v);
     }
 }
 

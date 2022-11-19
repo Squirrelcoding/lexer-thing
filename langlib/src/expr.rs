@@ -2,7 +2,7 @@ use std::{fmt::Display, mem};
 
 use colored::Colorize;
 
-use crate::{lexer::op::UnOp, parser::err::ParserError, func::Func};
+use crate::{func::Func, lexer::op::UnOp, parser::err::ParserError};
 
 use super::lexer::op::BinOp;
 
@@ -52,6 +52,7 @@ impl Display for Expr {
 
             Expr::Bool(bool) => write!(f, "{}", format!("{bool}").yellow()),
             Expr::Null => write!(f, "{}", "null".bright_black()),
+            Expr::Func(_) => write!(f, "{}", "<func>".bright_black()),
             other => write!(f, "{other:?}"),
         }
     }
@@ -82,6 +83,17 @@ impl TryInto<bool> for Expr {
     }
 }
 
+impl TryInto<String> for Expr {
+    type Error = ParserError;
+
+    fn try_into(self) -> Result<String, Self::Error> {
+        match self {
+            Expr::Str(s) => Ok(s),
+            _ => Err(ParserError::ExprError(ExprError::FailedConversion)),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BinExpr {
     pub lhs: Box<Expr>,
@@ -103,6 +115,15 @@ impl BinExpr {
         Ok((lhs, rhs))
     }
 
+        /// Attempts to convert the operands into strings.
+        fn try_into_strings(&self) -> Result<(String, String), ParserError> {
+            let a: String = (*self.lhs).eval()?.try_into()?;
+    
+            let b: String = (*self.rhs).eval()?.try_into()?;
+    
+            Ok((a, b))
+        }
+
     /// Attempts to convert the operands into booleans.
     fn try_into_bools(&self) -> Result<(bool, bool), ParserError> {
         let lhs: bool = (*self.lhs).eval()?.try_into()?;
@@ -115,11 +136,13 @@ impl BinExpr {
     /// Evaluates the expression, and consumes itself.
     pub fn eval(&self) -> Result<Expr, ParserError> {
         match self.op {
-            BinOp::Add => {
-                let (lhs, rhs) = self.try_into_nums()?;
-
-                Ok(Expr::Num(lhs + rhs))
-            }
+            BinOp::Add => match self.try_into_nums() {
+                Ok((a, b)) => Ok(Expr::Num(a + b)),
+                Err(_) => match self.try_into_strings() {
+                    Ok((a, b)) => Ok(Expr::Str(format!("{a}{b}"))),
+                    Err(err) => Err(err),
+                },
+            },
             BinOp::Sub => {
                 let (lhs, rhs) = self.try_into_nums()?;
 

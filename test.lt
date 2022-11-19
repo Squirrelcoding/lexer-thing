@@ -29,7 +29,13 @@ if (stringA == stringB) {
                         print "And for loops!";
                     }
 
-                    someFunctionCall(a, b, c)("A COOL STRING!!!!!!!!!!!!!", 1232435 * 15 / 23, !(!true == false))();
+                    func sayHi(first, last) {
+                        print "You can even call functions!";
+                        print "Hi, " + first + " " + last + "!";
+                    }
+      
+                    sayHi("<INSERT YOUR NAME HERE>", "<INSERT YOUR LAST NAME HERE>");
+
                 }
             }
         }
@@ -37,4 +43,12 @@ if (stringA == stringB) {
 
     print "Some simple arithmetic with a and b:";
     print (a * 2) + b; 
+
+    print "The functions can also be recursive! Look:";
+    func count(n) {
+        if (n > 1) count(n - 1);
+        print n;
+    }
+
+    count(50);
 }

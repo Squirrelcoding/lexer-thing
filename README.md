@@ -32,6 +32,14 @@ if (stringA == stringB) {
                     for (let i = 0; i <= 10; i = i + 1) {
                         print "And for loops!";
                     }
+
+                    func sayHi(first, last) {
+                        print "You can even call functions!";
+                        print "Hi, " + first + " " + last + "!";
+                    }
+      
+                    sayHi("<INSERT YOUR NAME HERE>", "<INSERT YOUR LAST NAME HERE>");
+
                 }
             }
         }
@@ -39,11 +47,19 @@ if (stringA == stringB) {
 
     print "Some simple arithmetic with a and b:";
     print (a * 2) + b; 
+
+    print "The functions can also be recursive! Look:";
+    func count(n) {
+        if (n > 1) count(n - 1);
+        print n;
+    }
+
+    count(50);
 }
 ```
 
 ## Currently working on
-- MAJOR restructuring to 
+- `return` statements
 ## Features
 - Basic unary expressions
 - Boolean, string, and integer literals
@@ -52,3 +68,4 @@ if (stringA == stringB) {
 - Comparisions for numbers (e.g `a > b` , `a != b`, etc.)
 - Lexical scope
 - Basic control flow (if statements and loops)
+- Return-less functions

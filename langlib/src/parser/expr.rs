@@ -134,7 +134,7 @@ impl Parser {
     /// Attempts to parse a function call.
     pub fn funcall(&mut self) -> Result<Expr, ParserError> {
         let mut expr = self.primary()?;
-        
+
         loop {
             if self.match_rule(&[Token::LeftBracket]) {
                 expr = self.parse_args(expr)?;
@@ -146,16 +146,13 @@ impl Parser {
         Ok(expr)
     }
 
-
     fn parse_args(&mut self, callee: Expr) -> Result<Expr, ParserError> {
-
         let mut args: Vec<Expr> = Vec::new();
 
         if self.curr()? != Token::RightBracket {
             loop {
-
                 args.push(self.expr()?);
-    
+
                 if !(self.match_rule(&[Token::Comma])) {
                     break;
                 }
@@ -200,7 +197,10 @@ impl Parser {
 
                     Ok(Expr::Bool(false))
                 }
-                _ => Err(ParserError::UnexpectedToken(Token::Keyword(keyword), self.cursor)),
+                _ => Err(ParserError::UnexpectedToken(
+                    Token::Keyword(keyword),
+                    self.cursor,
+                )),
             },
 
             // Attempt to parse an expression wrapped in brackets

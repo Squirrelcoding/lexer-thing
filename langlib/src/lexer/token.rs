@@ -94,6 +94,7 @@ pub enum Keyword {
     Print,
     While,
     For,
+    Func,
 }
 
 #[cfg(test)]

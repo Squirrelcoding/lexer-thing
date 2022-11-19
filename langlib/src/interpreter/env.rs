@@ -69,5 +69,4 @@ impl Env {
     pub fn drop(&mut self, k: &str) {
         self.vals.remove(k);
     }
-    
 }

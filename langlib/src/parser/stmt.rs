@@ -1,8 +1,8 @@
-use super::{err::{ParserError}, Parser};
+use super::{err::ParserError, Parser};
 use crate::{
     expr::Expr,
     lexer::token::{Keyword, Token},
-    stmt::{Declaration, Stmt},
+    stmt::{Declaration, Stmt}, func::Func,
 };
 
 impl Parser {
@@ -32,6 +32,7 @@ impl Parser {
                     Keyword::If => self.if_stmt(),
                     Keyword::While => self.while_stmt(),
                     Keyword::For => self.for_stmt(),
+                    Keyword::Func => self.func(),
 
                     _ => Err(ParserError::BadStatement(self.cursor)),
                 },
@@ -178,10 +179,7 @@ impl Parser {
             return Err(ParserError::Expected(Token::DeclarationSign, self.cursor));
         }
 
-        Err(ParserError::UnexpectedToken(
-            self.prev()?,
-            self.cursor,
-        ))
+        Err(ParserError::UnexpectedToken(self.prev()?, self.cursor))
     }
 
     /// Attempt to parse a for loop, by parsing it into a while loop.
@@ -213,5 +211,43 @@ impl Parser {
             initializer,
             Stmt::While(condition, Box::new(Stmt::Block(stmts))),
         ]))
+    }
+
+    pub fn func(&mut self) -> Result<Stmt, ParserError> {
+
+        if !self.match_rule(&[Token::Keyword(Keyword::Func)]) {
+            return Err(ParserError::Expected(Token::Keyword(Keyword::Func), self.cursor));
+        }
+
+        // Get the identifier and advance.
+        let ident = self.curr()?.try_into_ident()?;
+        self.adv();
+
+        if !self.match_rule(&[Token::LeftBracket]) {
+            return Err(ParserError::Expected(Token::LeftBracket, self.cursor));
+        }
+
+        let mut args = Vec::new();
+
+        loop {
+            args.push(self.curr()?.try_into_ident()?);
+
+            self.adv();
+
+            if !self.match_rule(&[Token::Comma]) {
+                break;
+            }
+        }
+
+        if !self.match_rule(&[Token::RightBracket]) {
+            return Err(ParserError::Expected(Token::RightBracket, self.cursor));
+        }
+
+        let body = self.block()?;
+
+        Ok(Stmt::Declaration(Declaration {
+            ident,
+            val: Expr::Func(Func::new(body, args)),
+        }))
     }
 }
