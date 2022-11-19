@@ -48,7 +48,7 @@ impl Display for Expr {
         match self {
             Expr::Num(num) => write!(f, "{}", format!("{num}").yellow()),
 
-            Expr::Str(string) => write!(f, "{}", format!("\"{string}\"").green()),
+            Expr::Str(string) => write!(f, "{string}"),
 
             Expr::Bool(bool) => write!(f, "{}", format!("{bool}").yellow()),
             Expr::Null => write!(f, "{}", "null".bright_black()),
