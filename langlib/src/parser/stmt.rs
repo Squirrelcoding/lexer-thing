@@ -1,8 +1,9 @@
 use super::{err::ParserError, Parser};
 use crate::{
     expr::Expr,
+    func::Func,
     lexer::token::{Keyword, Token},
-    stmt::{Declaration, Stmt}, func::Func,
+    stmt::{Declaration, Stmt},
 };
 
 impl Parser {
@@ -14,7 +15,13 @@ impl Parser {
             .find(|i| self.at(*i).unwrap() == Token::Semi)
         {
             Some(idx) => idx,
-            None => return Err(ParserError::Expected(Token::Semi, self.cursor)),
+            None => {
+                return Err(ParserError::Expected(
+                    Token::Semi,
+                    self.curr()?,
+                    self.cursor,
+                ))
+            }
         };
 
         // Tokens of the statement
@@ -33,6 +40,7 @@ impl Parser {
                     Keyword::While => self.while_stmt(),
                     Keyword::For => self.for_stmt(),
                     Keyword::Func => self.func(),
+                    Keyword::Return => self.return_stmt(),
 
                     _ => Err(ParserError::BadStatement(self.cursor)),
                 },
@@ -60,29 +68,23 @@ impl Parser {
 
     /// Attempts to parse a declaration statement.
     fn declaration(&mut self) -> Result<Stmt, ParserError> {
-        if self.match_rule(&[Token::Keyword(Keyword::Let), Token::Ident(String::from(""))]) {
-            if self.match_rule(&[Token::DeclarationSign]) {
-                // Get the identier and value
-                let ident = self.at(self.cursor - 2)?.try_into_ident()?;
-
-                let expr = self.expr()?;
-
-                return Ok(Stmt::Declaration(Declaration { ident, val: expr }));
-            }
-
+        self.expect_consume(&[Token::Keyword(Keyword::Let), Token::Ident(String::from(""))])?;
+        if self.match_rule(&[Token::DeclarationSign]) {
+            // Get the identier and value
             let ident = self.at(self.cursor - 2)?.try_into_ident()?;
 
-            // Set the variable to null by default;
-            return Ok(Stmt::Declaration(Declaration {
-                ident,
-                val: Expr::Null,
-            }));
+            let expr = self.expr()?;
+
+            return Ok(Stmt::Declaration(Declaration { ident, val: expr }));
         }
 
-        Err(ParserError::Expected(
-            Token::Keyword(Keyword::Let),
-            self.cursor,
-        ))
+        let ident = self.at(self.cursor - 2)?.try_into_ident()?;
+
+        // Set the variable to null by default;
+        Ok(Stmt::Declaration(Declaration {
+            ident,
+            val: Expr::Null,
+        }))
     }
 
     /// Attempts to parse a print statement.
@@ -119,13 +121,21 @@ impl Parser {
     /// Attempts to parse an if statement.
     fn if_stmt(&mut self) -> Result<Stmt, ParserError> {
         if !self.match_rule(&[Token::Keyword(Keyword::If), Token::LeftBracket]) {
-            return Err(ParserError::Expected(Token::LeftBracket, self.cursor));
+            return Err(ParserError::Expected(
+                Token::LeftBracket,
+                self.curr()?,
+                self.cursor,
+            ));
         }
 
         let expr = self.expr()?;
 
         if !self.match_rule(&[Token::RightBracket]) {
-            return Err(ParserError::Expected(Token::RightBracket, self.cursor));
+            return Err(ParserError::Expected(
+                Token::RightBracket,
+                self.curr()?,
+                self.cursor,
+            ));
         }
 
         // If we execute the block inside then that means we may have reached a line of code that looks like:
@@ -148,15 +158,11 @@ impl Parser {
 
     /// Attempts to parse a while loop
     fn while_stmt(&mut self) -> Result<Stmt, ParserError> {
-        if !self.match_rule(&[Token::Keyword(Keyword::While), Token::LeftBracket]) {
-            return Err(ParserError::Expected(Token::LeftBracket, self.cursor));
-        }
+        self.expect_consume(&[Token::Keyword(Keyword::While), Token::LeftBracket])?;
 
         let expr = self.expr()?;
 
-        if !self.match_rule(&[Token::RightBracket]) {
-            return Err(ParserError::Expected(Token::RightBracket, self.cursor));
-        }
+        self.expect_consume(&[Token::RightBracket])?;
 
         let block = self.block()?;
 
@@ -165,40 +171,30 @@ impl Parser {
 
     /// Attempts to parse an assignment.
     fn assignment(&mut self) -> Result<Stmt, ParserError> {
-        if self.match_rule(&[Token::Ident(String::from(""))]) {
-            let ident = self.prev()?;
+        self.expect_consume(&[Token::Ident(String::from(""))])?;
 
-            if self.match_rule(&[Token::DeclarationSign]) {
-                let expr = self.expr()?;
+        let ident = self.prev()?;
 
-                return Ok(Stmt::Assignment(Declaration {
-                    ident: ident.try_into_ident()?,
-                    val: expr,
-                }));
-            }
-            return Err(ParserError::Expected(Token::DeclarationSign, self.cursor));
-        }
+        self.expect_consume(&[Token::DeclarationSign])?;
 
-        Err(ParserError::UnexpectedToken(self.prev()?, self.cursor))
+        let expr = self.expr()?;
+
+        Ok(Stmt::Assignment(Declaration {
+            ident: ident.try_into_ident()?,
+            val: expr,
+        }))
     }
 
     /// Attempt to parse a for loop, by parsing it into a while loop.
     fn for_stmt(&mut self) -> Result<Stmt, ParserError> {
-        if !self.match_rule(&[Token::Keyword(Keyword::For), Token::LeftBracket]) {
-            return Err(ParserError::Expected(
-                Token::Keyword(Keyword::For),
-                self.cursor,
-            ));
-        }
+        self.expect_consume(&[Token::Keyword(Keyword::For), Token::LeftBracket])?;
 
         let initializer = self.stmt()?;
 
         let condition = self.expr()?;
         let increment = self.stmt()?;
 
-        if !self.match_rule(&[Token::RightBracket]) {
-            return Err(ParserError::Expected(Token::RightBracket, self.cursor));
-        }
+        self.expect_consume(&[Token::RightBracket])?;
 
         let mut stmts = match self.block()? {
             Stmt::Block(stmts) => stmts,
@@ -214,18 +210,13 @@ impl Parser {
     }
 
     pub fn func(&mut self) -> Result<Stmt, ParserError> {
-
-        if !self.match_rule(&[Token::Keyword(Keyword::Func)]) {
-            return Err(ParserError::Expected(Token::Keyword(Keyword::Func), self.cursor));
-        }
+        self.expect_consume(&[Token::Keyword(Keyword::Func)])?;
 
         // Get the identifier and advance.
         let ident = self.curr()?.try_into_ident()?;
         self.adv();
 
-        if !self.match_rule(&[Token::LeftBracket]) {
-            return Err(ParserError::Expected(Token::LeftBracket, self.cursor));
-        }
+        self.expect_consume(&[Token::LeftBracket])?;
 
         let mut args = Vec::new();
 
@@ -239,9 +230,7 @@ impl Parser {
             }
         }
 
-        if !self.match_rule(&[Token::RightBracket]) {
-            return Err(ParserError::Expected(Token::RightBracket, self.cursor));
-        }
+        self.expect_consume(&[Token::RightBracket])?;
 
         let body = self.block()?;
 
@@ -249,5 +238,13 @@ impl Parser {
             ident,
             val: Expr::Func(Func::new(body, args)),
         }))
+    }
+
+    pub fn return_stmt(&mut self) -> Result<Stmt, ParserError> {
+        self.expect_consume(&[Token::Keyword(Keyword::Return)])?;
+
+        let expr = self.expr()?;
+
+        Ok(Stmt::Return(expr))
     }
 }

@@ -37,14 +37,14 @@ impl Interpreter {
 
         Ok(Self {
             instructions: stmts,
-            env: RefCell::new(Env::new()),
+            env: RefCell::new(Env::default()),
         })
     }
 
     pub fn new(instructions: Vec<Stmt>) -> Self {
         Self {
             instructions,
-            env: RefCell::new(Env::new()),
+            env: RefCell::new(Env::default()),
         }
     }
 
@@ -75,26 +75,49 @@ impl Interpreter {
             }
 
             Stmt::Expr(expr) => {
-                self.visit_expr(&expr)?;
-                // println!("EXPR;{}", self.visit_expr(&expr)?);
+                self.visit_expr(expr)?;
             }
 
             Stmt::Block(stmts) => {
                 let prev = self.env.to_owned().into_inner();
-
-                let mut new_env = Env::new();
+                
+                let mut new_env = Env::default();
                 new_env.set_parent(prev);
-
+                
                 self.env.replace(new_env);
+                
+                // The return statement that can be mutated
+                let mut return_stmt: Expr = Expr::Null;
 
                 for block_stmt in stmts {
-                    self.execute_stmt(block_stmt)?;
+
+                    // If there is an error there's a chance that it's of the variant "ReturnStmt"
+                    match self.execute_stmt(block_stmt) {
+                        Ok(_) => continue,
+                        Err(err) => match err {
+                            Err::ReturnStmt(stmt) => match stmt {
+                                Stmt::Return(expr) => {
+
+                                    // Set the return statement to the expr and break;
+                                    return_stmt = expr;
+                                    break;
+                                },
+                                _ => unreachable!(),
+                            },
+                            err => return Err(err),
+                        },
+                    };
                 }
-
+                
+                // Clean up
                 let parent = self.env.to_owned().into_inner().get_parent().unwrap();
-
                 self.env.replace(parent);
-            }
+
+                // Return the return statement
+                if return_stmt != Expr::Null {
+                    self.execute_stmt(&Stmt::Return(return_stmt))?
+                }
+            },
             Stmt::If(expr, block, else_block) => {
                 let result = match self.visit_expr(expr)? {
                     Expr::Bool(b) => b,
@@ -118,6 +141,9 @@ impl Interpreter {
                 self.env
                     .borrow_mut()
                     .assign(declaration.ident.to_owned(), expr)?;
+            },
+            Stmt::Return(expr) => {
+                return Err(Err::ReturnStmt(Stmt::Return(self.visit_expr(expr)?)));
             }
         }
 
@@ -151,9 +177,7 @@ impl Interpreter {
             },
 
             Expr::Funcall(callee, args) => {
-
-
-                let func = self.visit_expr(&callee)?;
+                let func = self.visit_expr(callee)?;
 
                 let func = match func {
                     Expr::Func(func) => func,
@@ -176,9 +200,7 @@ impl Interpreter {
                     )));
                 }
 
-                self.exec_func(func, args)?;
-
-                Ok(Expr::Null)
+                self.exec_func(func, args)
             }
 
             _ => Ok(expr.clone()),
@@ -186,16 +208,37 @@ impl Interpreter {
     }
 
     pub fn exec_func(&self, func: Func, args: Vec<Expr>) -> Result<Expr, Err> {
+
+        let prev = self.env.to_owned().into_inner();
+
+        let mut new_env = Env::default();
+        new_env.set_parent(prev);
+
+        self.env.replace(new_env);
+
         // Bring all the variables into scope.
-        for i in 0..args.len() {
+        (0..args.len()).for_each(|i| {
             self.env
                 .borrow_mut()
                 .define(func.args[i].clone(), args[i].to_owned());
-        }
+        });
 
-        self.execute_stmt(&func.instructions)?;
+        let return_val = match self.execute_stmt(&func.instructions) {
+            Ok(_) => Ok(Expr::Null),
+            Err(err) => match err {
+                Err::ReturnStmt(stmt) => match stmt {
+                    Stmt::Return(expr) => Ok(expr),
+                    _ => unreachable!(),
+                },
+                err => Err(err),
+            },
+        };
 
-        Ok(Expr::Null)
+        let parent = self.env.to_owned().into_inner().get_parent().unwrap();
+
+        self.env.replace(parent);
+
+        return_val
     }
 
     // Helper functions for other structs
@@ -215,4 +258,7 @@ pub enum Err {
 
     #[error("An IO error occured while attempting to read the file.")]
     IOError(#[from] io::Error),
+
+    #[error("Not really an error.")]
+    ReturnStmt(Stmt),
 }

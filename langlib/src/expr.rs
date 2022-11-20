@@ -115,14 +115,14 @@ impl BinExpr {
         Ok((lhs, rhs))
     }
 
-        /// Attempts to convert the operands into strings.
-        fn try_into_strings(&self) -> Result<(String, String), ParserError> {
-            let a: String = (*self.lhs).eval()?.try_into()?;
-    
-            let b: String = (*self.rhs).eval()?.try_into()?;
-    
-            Ok((a, b))
-        }
+    /// Attempts to convert the operands into strings.
+    fn try_into_strings(&self) -> Result<(String, String), ParserError> {
+        let a: String = (*self.lhs).eval()?.try_into()?;
+
+        let b: String = (*self.rhs).eval()?.try_into()?;
+
+        Ok((a, b))
+    }
 
     /// Attempts to convert the operands into booleans.
     fn try_into_bools(&self) -> Result<(bool, bool), ParserError> {

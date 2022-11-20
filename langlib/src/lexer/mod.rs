@@ -25,10 +25,6 @@ impl<'a> Lexer<'a> {
     pub fn tokenize(&mut self) -> Result<Vec<Token>, LexerError> {
         let mut vec = Vec::new();
 
-        // while let Ok((tok, _)) =  {
-        // vec.push(tok);
-        // }
-
         loop {
             match self.next_token() {
                 Ok(token) => vec.push(token.0),
@@ -156,6 +152,7 @@ impl<'a> Lexer<'a> {
             "while" => Token::Keyword(Keyword::While),
             "for" => Token::Keyword(Keyword::For),
             "func" => Token::Keyword(Keyword::Func),
+            "return" => Token::Keyword(Keyword::Return),
             "and" => Token::Op(BinOp::And),
             "or" => Token::Op(BinOp::Or),
             s => Token::Ident(s.to_owned()),

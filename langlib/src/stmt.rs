@@ -1,5 +1,3 @@
-use crate::func::Func;
-
 use super::expr::Expr;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -11,6 +9,7 @@ pub enum Stmt {
     Block(Vec<Stmt>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     While(Expr, Box<Stmt>),
+    Return(Expr),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, thiserror::Error)]

@@ -205,16 +205,12 @@ impl Parser {
 
             // Attempt to parse an expression wrapped in brackets
             _ => {
-                if self.match_rule(&[Token::LeftBracket]) {
-                    let expr = self.expr()?;
-                    if !self.match_rule(&[Token::RightBracket]) {
-                        return Err(ParserError::Expected(Token::RightBracket, self.cursor));
-                    }
+                self.expect_consume(&[Token::LeftBracket])?;
 
-                    return Ok(expr);
-                }
+                let expr = self.expr()?;
+                self.expect_consume(&[Token::RightBracket])?;
 
-                Err(ParserError::Expected(Token::LeftBracket, self.cursor))
+                Ok(expr)
             }
         }
     }

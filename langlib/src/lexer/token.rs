@@ -95,6 +95,7 @@ pub enum Keyword {
     While,
     For,
     Func,
+    Return,
 }
 
 #[cfg(test)]

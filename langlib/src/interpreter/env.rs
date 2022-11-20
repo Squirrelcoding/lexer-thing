@@ -4,19 +4,13 @@ use crate::expr::Expr;
 
 use super::err::RuntimeErr;
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Env {
     vals: HashMap<String, Expr>,
-    parent: Option<Box<RefCell<Env>>>,
+    pub parent: Option<Box<RefCell<Env>>>,
 }
 
 impl Env {
-    pub fn new() -> Self {
-        Self {
-            vals: HashMap::new(),
-            parent: None,
-        }
-    }
 
     /// Tries to get a variable from the environment.
     pub fn get(&self, k: &str) -> Result<Expr, RuntimeErr> {

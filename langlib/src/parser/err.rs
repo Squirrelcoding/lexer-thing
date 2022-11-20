@@ -30,8 +30,8 @@ pub enum ParserError {
     #[error("An expected end to the stream of tokens was encountered")]
     UnexpectedEOF,
 
-    #[error("Expected token \"{0:?}\"")]
-    Expected(Token, usize),
+    #[error("Expected token \"{0:?}\", found {1:?}")]
+    Expected(Token, Token, usize),
 
     #[error("Expected expression")]
     ExpectedExpr(usize),
@@ -50,4 +50,7 @@ pub enum ParserError {
 
     #[error("Only a maximum capacity of 254 arguments is supported.")]
     TooManyArgs(usize),
+
+    #[error("The parser failed to match the rule: {0:?}")]
+    FailedRuleMatch(Vec<Token>, usize),
 }

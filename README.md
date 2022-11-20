@@ -48,18 +48,19 @@ if (stringA == stringB) {
     print "Some simple arithmetic with a and b:";
     print (a * 2) + b; 
 
-    print "The functions can also be recursive! Look:";
-    func count(n) {
-        if (n > 1) count(n - 1);
-        print n;
+    print "We can even calculate the fibonacci sequence recursively! Look:";
+    func fib(n) {
+        if (n <= 1) return n;
+        return fib(n - 2) + fib(n - 1);
     }
 
-    count(50);
+    print fib(20);
+
 }
 ```
 
 ## Currently working on
-- `return` statements
+- Refactoring
 ## Features
 - Basic unary expressions
 - Boolean, string, and integer literals
@@ -68,4 +69,4 @@ if (stringA == stringB) {
 - Comparisions for numbers (e.g `a > b` , `a != b`, etc.)
 - Lexical scope
 - Basic control flow (if statements and loops)
-- Return-less functions
+- Functions

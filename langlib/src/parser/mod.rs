@@ -148,4 +148,12 @@ impl Parser {
     pub fn is_at_end(&self) -> bool {
         self.cursor >= self.tokens.len()
     }
+
+    pub fn expect_consume(&mut self, tokens: &[Token]) -> Result<(), ParserError> {
+        if !self.match_rule(tokens) {
+            return Err(ParserError::FailedRuleMatch(tokens.to_vec(), self.cursor));
+        }
+
+        Ok(())
+    }
 }
