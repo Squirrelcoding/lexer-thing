@@ -27,6 +27,7 @@ impl Parser {
         // Tokens of the statement
         let slice = &self.tokens[self.cursor..idx];
 
+
         // Big ugly match expression that's very difficult to read
         match slice.iter().next() {
             // Check if there's even a token
@@ -210,24 +211,26 @@ impl Parser {
     }
 
     pub fn func(&mut self) -> Result<Stmt, ParserError> {
+        
         self.expect_consume(&[Token::Keyword(Keyword::Func)])?;
-
+        
         // Get the identifier and advance.
         let ident = self.curr()?.try_into_ident()?;
         self.adv();
-
+        
         self.expect_consume(&[Token::LeftBracket])?;
-
+        
         let mut args = Vec::new();
-
+        
+        println!("HERE");
         loop {
-            args.push(self.curr()?.try_into_ident()?);
-
-            self.adv();
-
             if !self.match_rule(&[Token::Comma]) {
                 break;
             }
+            args.push(self.curr()?.try_into_ident()?);
+            
+            self.adv();
+            
         }
 
         self.expect_consume(&[Token::RightBracket])?;

@@ -6,7 +6,7 @@ use std::{
     cell::RefCell,
     fs::OpenOptions,
     io::{self, Read},
-    path::Path,
+    path::Path, borrow::BorrowMut,
 };
 
 use crate::{
@@ -49,7 +49,7 @@ impl Interpreter {
     }
 
     /// Interprets the code
-    pub fn interpret(&self) -> Result<(), Err> {
+    pub fn interpret(mut self) -> Result<(), Err> {
         for stmt in &self.instructions {
             self.execute_stmt(stmt)?;
         }
@@ -58,7 +58,7 @@ impl Interpreter {
     }
 
     /// Interprets the instructions
-    pub fn execute_stmt(&self, stmt: &Stmt) -> Result<(), Err> {
+    pub fn execute_stmt(&mut self, stmt: &Stmt) -> Result<(), Err> {
         match stmt {
             Stmt::Declaration(declaration) => {
                 let expr = self.visit_expr(&declaration.val)?;
@@ -147,7 +147,7 @@ impl Interpreter {
     }
 
     /// Visits an expression and executes it.
-    fn visit_expr(&self, expr: &Expr) -> Result<Expr, Err> {
+    fn visit_expr(&mut self, expr: &Expr) -> Result<Expr, Err> {
         match expr {
             Expr::Var(var) => match self.env.borrow().get(var) {
                 Ok(val) => Ok(val),
@@ -196,7 +196,7 @@ impl Interpreter {
                     )));
                 }
 
-                self.exec_func(func, args)
+                func.exec(self, args)
             }
 
             _ => Ok(expr.clone()),
