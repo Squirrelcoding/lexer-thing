@@ -80,44 +80,40 @@ impl Interpreter {
 
             Stmt::Block(stmts) => {
                 let prev = self.env.to_owned().into_inner();
-                
+
                 let mut new_env = Env::default();
                 new_env.set_parent(prev);
-                
+
                 self.env.replace(new_env);
-                
-                // The return statement that can be mutated
-                let mut return_stmt: Expr = Expr::Null;
 
-                for block_stmt in stmts {
-
-                    // If there is an error there's a chance that it's of the variant "ReturnStmt"
-                    match self.execute_stmt(block_stmt) {
-                        Ok(_) => continue,
+                let return_stmt =
+                    match stmts.iter().find_map(|stmt| match self.execute_stmt(stmt) {
+                        Ok(_) => None,
                         Err(err) => match err {
-                            Err::ReturnStmt(stmt) => match stmt {
-                                Stmt::Return(expr) => {
-
-                                    // Set the return statement to the expr and break;
-                                    return_stmt = expr;
-                                    break;
-                                },
-                                _ => unreachable!(),
-                            },
-                            err => return Err(err),
+                            Err::ReturnStmt(expr) => Some(Ok(expr)),
+                            err => return Some(Err(err)),
                         },
+                    }) {
+                        Some(expr) => expr?,
+                        None => Expr::Null,
                     };
-                }
-                
+
                 // Clean up
-                let parent = self.env.to_owned().into_inner().get_parent().unwrap();
+                let parent = self
+                    .env
+                    .to_owned()
+                    .into_inner()
+                    .parent
+                    .unwrap()
+                    .into_inner();
                 self.env.replace(parent);
 
-                // Return the return statement
+                // Return the return statement if it's not
                 if return_stmt != Expr::Null {
                     self.execute_stmt(&Stmt::Return(return_stmt))?
                 }
-            },
+            }
+
             Stmt::If(expr, block, else_block) => {
                 let result = match self.visit_expr(expr)? {
                     Expr::Bool(b) => b,
@@ -141,9 +137,9 @@ impl Interpreter {
                 self.env
                     .borrow_mut()
                     .assign(declaration.ident.to_owned(), expr)?;
-            },
+            }
             Stmt::Return(expr) => {
-                return Err(Err::ReturnStmt(Stmt::Return(self.visit_expr(expr)?)));
+                return Err(Err::ReturnStmt(self.visit_expr(expr)?));
             }
         }
 
@@ -208,7 +204,6 @@ impl Interpreter {
     }
 
     pub fn exec_func(&self, func: Func, args: Vec<Expr>) -> Result<Expr, Err> {
-
         let prev = self.env.to_owned().into_inner();
 
         let mut new_env = Env::default();
@@ -226,10 +221,7 @@ impl Interpreter {
         let return_val = match self.execute_stmt(&func.instructions) {
             Ok(_) => Ok(Expr::Null),
             Err(err) => match err {
-                Err::ReturnStmt(stmt) => match stmt {
-                    Stmt::Return(expr) => Ok(expr),
-                    _ => unreachable!(),
-                },
+                Err::ReturnStmt(inner) => Ok(inner),
                 err => Err(err),
             },
         };
@@ -260,5 +252,5 @@ pub enum Err {
     IOError(#[from] io::Error),
 
     #[error("Not really an error.")]
-    ReturnStmt(Stmt),
+    ReturnStmt(Expr),
 }

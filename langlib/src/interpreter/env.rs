@@ -1,4 +1,6 @@
-use std::{cell::RefCell, collections::HashMap};
+use std::cell::RefCell;
+
+use ahash::AHashMap;
 
 use crate::expr::Expr;
 
@@ -6,12 +8,11 @@ use super::err::RuntimeErr;
 
 #[derive(Debug, Eq, PartialEq, Clone, Default)]
 pub struct Env {
-    vals: HashMap<String, Expr>,
+    vals: AHashMap<String, Expr>,
     pub parent: Option<Box<RefCell<Env>>>,
 }
 
 impl Env {
-
     /// Tries to get a variable from the environment.
     pub fn get(&self, k: &str) -> Result<Expr, RuntimeErr> {
         match self.vals.get(k) {

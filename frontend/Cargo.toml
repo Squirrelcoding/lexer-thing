@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 langlib = { path="../langlib" }
+mimalloc = "0.1.32"
