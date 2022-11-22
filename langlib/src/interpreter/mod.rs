@@ -6,7 +6,7 @@ use std::{
     cell::RefCell,
     fs::OpenOptions,
     io::{self, Read},
-    path::Path, borrow::BorrowMut,
+    path::Path,
 };
 
 use crate::{
@@ -22,7 +22,7 @@ use self::env::Env;
 #[derive(Debug)]
 pub struct Interpreter {
     instructions: Vec<Stmt>,
-    env: RefCell<Env>,
+    pub env: RefCell<Env>,
 }
 
 impl Interpreter {
@@ -50,8 +50,9 @@ impl Interpreter {
 
     /// Interprets the code
     pub fn interpret(mut self) -> Result<(), Err> {
-        for stmt in &self.instructions {
-            self.execute_stmt(stmt)?;
+        for i in 0..self.instructions.len() {
+            let stmt = self.instructions[i].clone();
+            self.execute_stmt(&stmt)?;
         }
 
         Ok(())
@@ -108,7 +109,7 @@ impl Interpreter {
                     .into_inner();
                 self.env.replace(parent);
 
-                // Return the return statement if it's not
+                // Return the return statement if it's not null
                 if return_stmt != Expr::Null {
                     self.execute_stmt(&Stmt::Return(return_stmt))?
                 }
@@ -175,7 +176,7 @@ impl Interpreter {
             Expr::Funcall(callee, args) => {
                 let func = self.visit_expr(callee)?;
 
-                let func = match func {
+                let mut func = match func {
                     Expr::Func(func) => func,
                     _ => {
                         return Err(Err::RuntimeErr(RuntimeErr::UnexpectedType(
@@ -189,48 +190,19 @@ impl Interpreter {
                     .map(|expr| self.visit_expr(expr))
                     .try_collect()?;
 
-                if func.arity() != args.len() {
+                if func.arg_len() != args.len() {
                     return Err(Err::RuntimeErr(RuntimeErr::BadArgLength(
-                        func.arity(),
+                        func.arg_len(),
                         args.len(),
                     )));
                 }
 
+                func.set_closure(self.env.clone().into_inner());
                 func.exec(self, args)
             }
 
             _ => Ok(expr.clone()),
         }
-    }
-
-    pub fn exec_func(&self, func: Func, args: Vec<Expr>) -> Result<Expr, Err> {
-        let prev = self.env.to_owned().into_inner();
-
-        let mut new_env = Env::default();
-        new_env.set_parent(prev);
-
-        self.env.replace(new_env);
-
-        // Bring all the variables into scope.
-        (0..args.len()).for_each(|i| {
-            self.env
-                .borrow_mut()
-                .define(func.args[i].clone(), args[i].to_owned());
-        });
-
-        let return_val = match self.execute_stmt(&func.instructions) {
-            Ok(_) => Ok(Expr::Null),
-            Err(err) => match err {
-                Err::ReturnStmt(inner) => Ok(inner),
-                err => Err(err),
-            },
-        };
-
-        let parent = self.env.to_owned().into_inner().get_parent().unwrap();
-
-        self.env.replace(parent);
-
-        return_val
     }
 
     // Helper functions for other structs

@@ -1,11 +1,12 @@
 func makeCounter() {
+  let i = 0;
   func count() {
-    print 5;
+    i = i + 1;
+    print i;
   }
 
   return count;
 }
 
-let counter = makeCounter();
-counter();
-counter();
+let count = makeCounter();
+print count();
