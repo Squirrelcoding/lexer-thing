@@ -253,4 +253,16 @@ impl Parser {
 
         Ok(Stmt::Return(expr))
     }
+
+    pub fn class_stmt(&mut self) -> Result<Stmt, ParserError> {
+        self.expect_consume(&[Token::Keyword(Keyword::Class)])?;
+
+        // Get the identifier and advance.
+        let ident = self.curr()?.try_into_ident()?;
+        self.adv();
+
+        self.expect_consume(&[Token::LeftCurly])?;
+
+        todo!()
+    }
 }

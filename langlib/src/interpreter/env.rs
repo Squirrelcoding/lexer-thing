@@ -32,10 +32,10 @@ impl Env {
     }
 
     /// Assigns a value to a variable.
-    pub fn assign(&mut self, k: String, v: Expr) -> Result<(), RuntimeErr> {
-        match self.vals.get(&k) {
+    pub fn assign(&mut self, k: &str, v: Expr) -> Result<(), RuntimeErr> {
+        match self.vals.get(k) {
             Some(_) => {
-                self.vals.insert(k, v);
+                self.vals.insert(k.to_owned(), v);
                 Ok(())
             }
             None => match &self.parent {

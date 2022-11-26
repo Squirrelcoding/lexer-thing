@@ -11,7 +11,6 @@ use std::{
 
 use crate::{
     expr::{BinExpr, Expr},
-    func::Func,
     lexer::{err::LexerError, Lexer},
     parser::{err::ParserError, Parser},
     stmt::Stmt,
@@ -62,7 +61,16 @@ impl Interpreter {
     pub fn execute_stmt(&mut self, stmt: &Stmt) -> Result<(), Err> {
         match stmt {
             Stmt::Declaration(declaration) => {
-                let expr = self.visit_expr(&declaration.val)?;
+                let mut expr = self.visit_expr(&declaration.val)?;
+
+                // Set the closure of the function if it doesn't have one already
+                if let Expr::Func(func) = &mut expr {
+
+                    if func.closure.is_none() {
+                        func.set_closure(self.env.clone().into_inner());
+                    }
+
+                }
 
                 self.env
                     .borrow_mut()
@@ -70,7 +78,7 @@ impl Interpreter {
             }
 
             Stmt::Print(exprr) => {
-                let result = self.visit_expr(exprr)?.eval()?;
+                let result = self.visit_expr(exprr)?;
 
                 println!("{result}");
             }
@@ -81,37 +89,30 @@ impl Interpreter {
 
             Stmt::Block(stmts) => {
                 let prev = self.env.to_owned().into_inner();
+                let save = self.env.to_owned().into_inner();
 
                 let mut new_env = Env::default();
                 new_env.set_parent(prev);
 
                 self.env.replace(new_env);
 
-                let return_stmt =
-                    match stmts.iter().find_map(|stmt| match self.execute_stmt(stmt) {
-                        Ok(_) => None,
-                        Err(err) => match err {
-                            Err::ReturnStmt(expr) => Some(Ok(expr)),
-                            err => return Some(Err(err)),
-                        },
-                    }) {
-                        Some(expr) => expr?,
-                        None => Expr::Null,
-                    };
+                let return_val = match stmts.iter().find_map(|stmt| match self.execute_stmt(stmt) {
+                    Ok(_) => None,
+                    Err(err) => match err {
+                        Err::ReturnStmt(expr) => Some(Ok(expr)),
+                        err => return Some(Err(err)),
+                    },
+                }) {
+                    Some(expr) => expr?,
+                    None => Expr::Null,
+                };
 
-                // Clean up
-                let parent = self
-                    .env
-                    .to_owned()
-                    .into_inner()
-                    .parent
-                    .unwrap()
-                    .into_inner();
-                self.env.replace(parent);
+                // Restore the original
+                self.env.replace(save);
 
                 // Return the return statement if it's not null
-                if return_stmt != Expr::Null {
-                    self.execute_stmt(&Stmt::Return(return_stmt))?
+                if return_val != Expr::Null {
+                    return Err(Err::ReturnStmt(return_val));
                 }
             }
 
@@ -135,9 +136,7 @@ impl Interpreter {
             Stmt::Assignment(declaration) => {
                 let expr = self.visit_expr(&declaration.val)?;
 
-                self.env
-                    .borrow_mut()
-                    .assign(declaration.ident.to_owned(), expr)?;
+                self.env.borrow_mut().assign(&declaration.ident, expr)?;
             }
             Stmt::Return(expr) => {
                 return Err(Err::ReturnStmt(self.visit_expr(expr)?));
@@ -176,14 +175,12 @@ impl Interpreter {
             Expr::Funcall(callee, args) => {
                 let func = self.visit_expr(callee)?;
 
-                let mut func = match func {
-                    Expr::Func(func) => func,
-                    _ => {
-                        return Err(Err::RuntimeErr(RuntimeErr::UnexpectedType(
-                            err::LexerThingType::Func,
-                        )))
-                    }
-                };
+                let func = match func {
+                    Expr::Func(func) => Ok(func),
+                    _ => Err(Err::RuntimeErr(RuntimeErr::UnexpectedType(
+                        err::LexerThingType::Func,
+                    ))),
+                }?;
 
                 let args: Vec<Expr> = args
                     .iter()
@@ -197,7 +194,6 @@ impl Interpreter {
                     )));
                 }
 
-                func.set_closure(self.env.clone().into_inner());
                 func.exec(self, args)
             }
 
@@ -205,7 +201,7 @@ impl Interpreter {
         }
     }
 
-    // Helper functions for other structs
+    /// Helper functions for other structs, defines a variable in the internal env.
     pub fn define_var(&self, k: String, v: Expr) {
         self.env.borrow_mut().define(k, v);
     }

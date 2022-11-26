@@ -96,6 +96,7 @@ pub enum Keyword {
     For,
     Func,
     Return,
+    Class,
 }
 
 #[cfg(test)]

@@ -115,15 +115,6 @@ impl BinExpr {
         Ok((lhs, rhs))
     }
 
-    /// Attempts to convert the operands into strings.
-    fn try_into_strings(&self) -> Result<(String, String), ParserError> {
-        let a: String = (*self.lhs).eval()?.try_into()?;
-
-        let b: String = (*self.rhs).eval()?.try_into()?;
-
-        Ok((a, b))
-    }
-
     /// Attempts to convert the operands into booleans.
     fn try_into_bools(&self) -> Result<(bool, bool), ParserError> {
         let lhs: bool = (*self.lhs).eval()?.try_into()?;
@@ -137,11 +128,11 @@ impl BinExpr {
     pub fn eval(&self) -> Result<Expr, ParserError> {
         match self.op {
             BinOp::Add => match self.try_into_nums() {
+                // Addition
                 Ok((a, b)) => Ok(Expr::Num(a + b)),
-                Err(_) => match self.try_into_strings() {
-                    Ok((a, b)) => Ok(Expr::Str(format!("{a}{b}"))),
-                    Err(err) => Err(err),
-                },
+
+                // String concatenation
+                Err(_) => Ok(Expr::Str(format!("{}{}", self.lhs, self.rhs))),
             },
             BinOp::Sub => {
                 let (lhs, rhs) = self.try_into_nums()?;

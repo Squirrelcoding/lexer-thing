@@ -5,9 +5,11 @@ static GLOBAL: MiMalloc = MiMalloc;
 
 use std::path::Path;
 
-use langlib::interpreter::Interpreter;
+use langlib::{interpreter::Interpreter, lexer::Lexer};
 
 fn main() -> Result<(), langlib::interpreter::Err> {
-    Interpreter::from_file(Path::new("test.lt"))?.interpret()?;
+    let s = "class Poop";
+    let tokens = Lexer::new(s).tokenize()?;
+    println!("{tokens:?}");
     Ok(())
 }

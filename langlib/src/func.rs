@@ -7,7 +7,7 @@ use crate::{
 pub struct Func {
     pub instructions: Box<Stmt>,
     pub args: Vec<String>,
-    closure: Env,
+    pub closure: Option<Env>,
 }
 
 impl Func {
@@ -15,7 +15,7 @@ impl Func {
         Self {
             instructions: Box::new(instructions),
             args,
-            closure: Env::default(),
+            closure: None,
         }
     }
 
@@ -28,57 +28,38 @@ impl Func {
         interpreter: &mut Interpreter,
         args: Vec<Expr>,
     ) -> Result<Expr, interpreter::Err> {
-        let prev = self.closure;
-
+        if self.closure.is_none() {
+            panic!("Function has no closure. If you see this message than the code of the interpreter is fucked up.");
+        }
+        
+        let save = interpreter.env.clone().into_inner();
+        
         let mut new_env = Env::default();
-        new_env.set_parent(prev);
 
-        interpreter.env.replace(new_env);
-
+        new_env.set_parent(self.closure.unwrap());
+        
         // Bring all the variables into scope
         (0..args.len()).for_each(|i| {
-            interpreter.define_var(self.args[i].clone(), args[i].clone());
+            new_env.define(self.args[i].clone(), args[i].clone());
         });
 
-        // Get the instructions for the function
-        let stmts = match self.instructions.as_ref() {
-            Stmt::Block(stmts) => stmts,
-            _ => todo!(),
+        interpreter.env.replace(new_env);
+        
+        let return_val = match interpreter.execute_stmt(&self.instructions) {
+            Ok(_) => Expr::Null,
+            Err(err) => match err {
+                interpreter::Err::ReturnStmt(expr) => expr,
+                err => return Err(err),
+            },
         };
 
-        // Keep executing until we encounter a return statement
-        let return_val = match stmts
-            .iter()
-            .find_map(|stmt| match interpreter.execute_stmt(stmt) {
-                Ok(_) => None,
-                Err(err) => match err {
-                    interpreter::Err::ReturnStmt(expr) => Some(Ok(expr)),
-                    err => Some(Err(err)),
-                },
-            }) {
-            Some(return_val) => Ok(return_val?),
-            None => Ok(Expr::Null),
-        };
+        interpreter.env.replace(save);
 
-        // Clean up the environment
-        (0..args.len()).for_each(|i| {
-            interpreter.env.borrow_mut().drop(&self.args[i]);
-        });
-
-        let parent = interpreter
-            .env
-            .to_owned()
-            .into_inner()
-            .parent
-            .unwrap()
-            .into_inner();
-        interpreter.env.replace(parent);
-
-        return_val
+        Ok(return_val)
     }
 
     /// Sets the closure of this function.
     pub fn set_closure(&mut self, closure: Env) {
-        self.closure = closure;
+        self.closure = Some(closure);
     }
 }

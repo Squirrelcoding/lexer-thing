@@ -8,5 +8,11 @@ func makeCounter() {
   return count;
 }
 
-let count = makeCounter();
-print count();
+let counter = makeCounter();
+
+counter();
+counter();
+counter();
+counter();
+counter();
+counter();
